@@ -1,0 +1,17 @@
+{
+  "name": "ViaturaCheck 14º BPM - Batalhão Cel PM Manoel de Souza Ferraz",
+  "short_name": "ViaturaCheck",
+  "description": "Checklist digital inteligente para o Batalhão Cel PM Manoel de Souza Ferraz - PMPE",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E4E3E0",
+  "theme_color": "#003087",
+  "icons": [
+    {
+      "src": "http://www.pm.pe.gov.br/wp-content/uploads/2021/03/logo_14_bpm-150x150.png",
+      "sizes": "150x150",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
