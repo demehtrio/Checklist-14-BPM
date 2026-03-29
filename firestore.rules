@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: checklists
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required) - UID do autor
+    //   - userEmail: string - Email do autor
+    //   - userName: string - Nome do autor
+    //   - viatura: string (required)
+    //   - condutorEntra: string (required)
+    //   - kmInicial: string (required)
+    //   - createdAt: timestamp (required)
+    //   [...outros campos do checklist]
+    //
+    // Collection: users
+    // Document ID: userId (UID)
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - role: string (required, 'admin' | 'user')
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "demetriomarques@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidChecklist(data) {
+      return data.userId is string && data.userId.size() > 0 &&
+             data.viatura is string && data.viatura.size() > 0 &&
+             data.condutorEntra is string && data.condutorEntra.size() > 0 &&
+             data.kmInicial is string && data.kmInicial.size() > 0;
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid == request.auth.uid &&
+             data.email is string && data.email.size() > 0 &&
+             data.role in ['admin', 'user'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Checklists
+    match /checklists/{checklistId} {
+      allow read: if isAuthenticated() && (isDocOwner() || isAdmin());
+      allow create: if isAuthenticated() && isValidChecklist(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && (isDocOwner() || isAdmin()) && isValidChecklist(request.resource.data) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    // Users
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && (isAdmin() || request.resource.data.role == resource.data.role);
+    }
+
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

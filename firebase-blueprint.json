@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "Checklist": {
+      "title": "Checklist",
+      "description": "Registro de checklist de viatura",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "servico": { "type": "string" },
+        "dataArmou": { "type": "string" },
+        "horaArmou": { "type": "string" },
+        "condutorSai": { "type": "string" },
+        "telCondutorSai": { "type": "string" },
+        "condutorEntra": { "type": "string" },
+        "telCondutorEntra": { "type": "string" },
+        "viatura": { "type": "string" },
+        "placa": { "type": "string" },
+        "prefixo": { "type": "string" },
+        "kmInicial": { "type": "string" },
+        "kmFinal": { "type": "string" },
+        "dataDesarmou": { "type": "string" },
+        "horaDesarmou": { "type": "string" },
+        "fotos": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "viatura", "condutorEntra", "kmInicial"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Perfil de usuário e permissões",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "lastLogin": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/checklists/{checklistId}": {
+      "schema": "Checklist",
+      "description": "Coleção global de checklists"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Perfis de usuários e permissões"
+    }
+  }
+}

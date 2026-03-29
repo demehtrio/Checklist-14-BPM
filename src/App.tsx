@@ -23,22 +23,96 @@ import {
   ArrowRightLeft,
   LogIn,
   LogOut,
-  Calendar
+  Calendar,
+  ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { parseChecklistDescription, ChecklistData } from './services/geminiService';
 import { POLICIAIS } from './constants/policiais';
+import { 
+  auth, 
+  db, 
+  loginWithGoogle, 
+  logout as firebaseLogout, 
+  onAuthStateChanged, 
+  FirebaseUser,
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  deleteDoc,
+  updateDoc,
+  serverTimestamp,
+  Timestamp
+} from './firebase';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 const INITIAL_STATE: ChecklistData = {
   servico: '',
   dataArmou: new Date().toLocaleDateString('pt-BR'),
   horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-  motoristaSai: '',
-  telMotoristaSai: '',
-  motoristaEntra: '',
-  telMotoristaEntra: '',
+  condutorSai: '',
+  telCondutorSai: '',
+  condutorEntra: '',
+  telCondutorEntra: '',
   viatura: '',
   placa: '',
   prefixo: '',
@@ -143,7 +217,9 @@ const SummaryItem = ({ label, value }: { label: string, value: string | string[]
 );
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'check' | 'history'>('check');
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [activeTab, setActiveTab] = useState<'check' | 'history' | 'settings'>('check');
   const [history, setHistory] = useState<ChecklistData[]>([]);
   const [formData, setFormData] = useState<ChecklistData>(INITIAL_STATE);
   const [aiInput, setAiInput] = useState('');
@@ -151,18 +227,75 @@ export default function App() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  // Admin State
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [loginError, setLoginError] = useState(false);
 
-  // Load from localStorage on mount
+  // Auth Listener
   useEffect(() => {
-    const savedHistory = localStorage.getItem('viatura_history');
-    if (savedHistory) {
-      try {
-        setHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error('Failed to load history', e);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      setIsAuthReady(true);
+      
+      if (firebaseUser) {
+        // Sync user to Firestore
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        try {
+          const userDoc = await getDoc(userRef);
+          if (!userDoc.exists()) {
+            await setDoc(userRef, {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName,
+              role: firebaseUser.email === 'demetriomarques@gmail.com' ? 'admin' : 'user',
+              lastLogin: serverTimestamp()
+            });
+          } else {
+            await updateDoc(userRef, {
+              lastLogin: serverTimestamp()
+            });
+            // Set admin state from DB
+            if (userDoc.data().role === 'admin') {
+              setIsAdmin(true);
+            }
+          }
+        } catch (error) {
+          handleFirestoreError(error, OperationType.WRITE, `users/${firebaseUser.uid}`);
+        }
+      } else {
+        setIsAdmin(false);
       }
-    }
+    });
+    return () => unsubscribe();
+  }, []);
 
+  // Firestore History Sync
+  useEffect(() => {
+    if (!user || !isAuthReady) return;
+
+    const q = isAdmin 
+      ? query(collection(db, 'checklists'), orderBy('createdAt', 'desc'))
+      : query(collection(db, 'checklists'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        // Convert Firestore timestamp to string if needed, or handle in UI
+      } as unknown as ChecklistData));
+      setHistory(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'checklists');
+    });
+
+    return () => unsubscribe();
+  }, [user, isAuthReady, isAdmin]);
+
+  // Load from localStorage on mount (for current form draft only)
+  useEffect(() => {
     const savedCurrent = localStorage.getItem('viatura_current_form');
     if (savedCurrent) {
       try {
@@ -180,40 +313,16 @@ export default function App() {
 
     const savedTab = localStorage.getItem('viatura_active_tab');
     if (savedTab === 'history') setActiveTab('history');
+    if (savedTab === 'settings') setActiveTab('settings');
   }, []);
 
-  // Save to localStorage on change
-  useEffect(() => {
-    localStorage.setItem('viatura_history', JSON.stringify(history));
-  }, [history]);
-
+  // Save draft to localStorage
   useEffect(() => {
     localStorage.setItem('viatura_current_form', JSON.stringify(formData));
     localStorage.setItem('viatura_is_submitted', String(isSubmitted));
     localStorage.setItem('viatura_show_success', String(showSuccess));
     localStorage.setItem('viatura_active_tab', activeTab);
   }, [formData, isSubmitted, showSuccess, activeTab]);
-
-  // Sync formData to history when submitted
-  useEffect(() => {
-    if (isSubmitted) {
-      const existingIndex = history.findIndex(h => 
-        h.viatura === formData.viatura && 
-        h.dataArmou === formData.dataArmou && 
-        h.horaArmou === formData.horaArmou
-      );
-
-      if (existingIndex >= 0) {
-        const entry = history[existingIndex];
-        // Only update if there's an actual change to avoid infinite loops
-        if (JSON.stringify(entry) !== JSON.stringify(formData)) {
-          const newHistory = [...history];
-          newHistory[existingIndex] = { ...formData };
-          setHistory(newHistory);
-        }
-      }
-    }
-  }, [formData, isSubmitted, history]);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
@@ -281,6 +390,31 @@ export default function App() {
     setHistory(newHistory);
   };
 
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simple hardcoded password for the prototype
+    if (adminPassword === '14bpmadmin') {
+      setIsAdmin(true);
+      setShowAdminLogin(false);
+      setActiveTab('settings');
+      setAdminPassword('');
+      setLoginError(false);
+    } else {
+      setLoginError(true);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAdmin(false);
+    setActiveTab('check');
+  };
+
+  const clearHistory = () => {
+    if (window.confirm('Tem certeza que deseja apagar todo o histórico? Esta ação não pode ser desfeita.')) {
+      setHistory([]);
+    }
+  };
+
   const toggleArrayItem = (field: keyof ChecklistData, item: string) => {
     setFormData(prev => {
       const current = prev[field] as string[];
@@ -334,10 +468,10 @@ export default function App() {
     // Clean up prefixo (take only the code before the dash if it exists)
     const prefixoFormatado = formData.prefixo.split(' - ')[0];
     
-    // Extract matricula from motoristaEntra (usually Grad / Nome / Mat)
-    const matMatch = formData.motoristaEntra.match(/(\d+[-\d]*)$/);
+    // Extract matricula from condutorEntra (usually Grad / Nome / Mat)
+    const matMatch = formData.condutorEntra.match(/(\d+[-\d]*)$/);
     const matricula = matMatch ? matMatch[1] : '';
-    const condutorNome = formData.motoristaEntra.split('/')[1]?.trim() || formData.motoristaEntra.split('/')[0]?.trim() || formData.motoristaEntra;
+    const condutorNome = formData.condutorEntra.split('/')[1]?.trim() || formData.condutorEntra.split('/')[0]?.trim() || formData.condutorEntra;
 
     const message = `🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
@@ -367,9 +501,9 @@ export default function App() {
 
     const placaFinal = formData.placa || placaFromVtr;
     const prefixoFormatado = formData.prefixo.split(' - ')[0];
-    const matMatch = formData.motoristaEntra.match(/(\d+[-\d]*)$/);
+    const matMatch = formData.condutorEntra.match(/(\d+[-\d]*)$/);
     const matricula = matMatch ? matMatch[1] : '';
-    const condutorNome = formData.motoristaEntra.split('/')[1]?.trim() || formData.motoristaEntra.split('/')[0]?.trim() || formData.motoristaEntra;
+    const condutorNome = formData.condutorEntra.split('/')[1]?.trim() || formData.condutorEntra.split('/')[0]?.trim() || formData.condutorEntra;
 
     const message = `✅ *CHECK-IN VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
@@ -398,9 +532,9 @@ export default function App() {
 
     const placaFinal = formData.placa || placaFromVtr;
     const prefixoFormatado = formData.prefixo.split(' - ')[0];
-    const matMatch = formData.motoristaEntra.match(/(\d+[-\d]*)$/);
+    const matMatch = formData.condutorEntra.match(/(\d+[-\d]*)$/);
     const matricula = matMatch ? matMatch[1] : '';
-    const condutorNome = formData.motoristaEntra.split('/')[1]?.trim() || formData.motoristaEntra.split('/')[0]?.trim() || formData.motoristaEntra;
+    const condutorNome = formData.condutorEntra.split('/')[1]?.trim() || formData.condutorEntra.split('/')[0]?.trim() || formData.condutorEntra;
 
     const message = `🏁 *CHECK-OUT VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
@@ -432,8 +566,8 @@ Hora Armou: ${formData.horaArmou}
 Hora Desarmou: ${formData.horaDesarmou}
 
 CONDUTORES:
-Sai: ${formData.motoristaSai}
-Entra: ${formData.motoristaEntra}
+Sai: ${formData.condutorSai}
+Entra: ${formData.condutorEntra}
 
 KILOMETRAGEM:
 KM Inicial: ${formData.kmInicial}
@@ -545,10 +679,10 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // CONDUTORES
       addSection('CONDUTORES', [
-        ['CONDUTOR que Sai', formData.motoristaSai],
-        ['Tel. CONDUTOR Sai', formData.telMotoristaSai],
-        ['CONDUTOR que Entra', formData.motoristaEntra],
-        ['Tel. CONDUTOR Entra', formData.telMotoristaEntra],
+        ['CONDUTOR que Sai', formData.condutorSai],
+        ['Tel. CONDUTOR Sai', formData.telCondutorSai],
+        ['CONDUTOR que Entra', formData.condutorEntra],
+        ['Tel. CONDUTOR Entra', formData.telCondutorEntra],
       ]);
 
       // Estado Técnico
@@ -674,13 +808,45 @@ Gerado via ViaturaCheck 14º BPM.`;
               <p className="text-[9px] opacity-70 uppercase tracking-widest">14º BPM - Polícia Militar de Pernambuco</p>
             </div>
           </div>
-          <div className="hidden md:block text-right">
-            <p className="text-xs font-mono opacity-50">{new Date().toLocaleDateString()}</p>
+          <div className="flex items-center gap-4">
+            {user && (
+              <div className="hidden md:flex flex-col items-end">
+                <span className="text-[10px] font-bold uppercase opacity-60">Usuário</span>
+                <span className="text-xs font-medium">{user.displayName || user.email}</span>
+              </div>
+            )}
+            <div className="hidden md:block text-right">
+              <p className="text-xs font-mono opacity-50">{new Date().toLocaleDateString()}</p>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+      {!isAuthReady ? (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <Loader2 className="w-12 h-12 text-pmpe-blue animate-spin" />
+          <p className="text-sm font-bold uppercase tracking-widest text-pmpe-blue opacity-40">Iniciando Sistema...</p>
+        </div>
+      ) : !user ? (
+        <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[40px] shadow-2xl border border-pmpe-blue/10 text-center space-y-8">
+          <div className="w-24 h-24 bg-pmpe-blue/5 rounded-full flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-12 h-12 text-pmpe-blue" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-pmpe-blue uppercase tracking-tight">Acesso Restrito</h2>
+            <p className="text-sm text-black/40 mt-2">Faça login com sua conta institucional para acessar o checklist do 14º BPM.</p>
+          </div>
+          <button
+            onClick={loginWithGoogle}
+            className="w-full flex items-center justify-center gap-3 bg-white border-2 border-pmpe-blue/10 p-4 rounded-2xl font-bold text-pmpe-blue hover:bg-pmpe-blue/5 transition-all shadow-sm"
+          >
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
+            Entrar com Google
+          </button>
+          <p className="text-[10px] text-black/30 uppercase tracking-widest font-bold">Polícia Militar de Pernambuco</p>
+        </div>
+      ) : (
+        <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
         {activeTab === 'check' ? (
           <>
             {/* AI Assistant Section */}
@@ -822,8 +988,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                   <label className="text-xs font-bold uppercase opacity-50">CONDUTOR que Sai (Grad / Nome / Mat)</label>
                   <select 
                     className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                    value={formData.motoristaSai}
-                    onChange={(e) => setFormData({...formData, motoristaSai: e.target.value})}
+                    value={formData.condutorSai}
+                    onChange={(e) => setFormData({...formData, condutorSai: e.target.value})}
                   >
                     <option value="">Selecione o policial</option>
                     {POLICIAIS.map((p, i) => <option key={`sai-${p}-${i}`} value={p}>{p}</option>)}
@@ -835,8 +1001,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                     type="tel"
                     className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
                     placeholder="(81) 9..."
-                    value={formData.telMotoristaSai}
-                    onChange={(e) => setFormData({...formData, telMotoristaSai: e.target.value})}
+                    value={formData.telCondutorSai}
+                    onChange={(e) => setFormData({...formData, telCondutorSai: e.target.value})}
                   />
                 </div>
               </div>
@@ -846,8 +1012,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                   <label className="text-xs font-bold uppercase opacity-50">CONDUTOR que Entra (Grad / Nome / Mat) *</label>
                   <select 
                     className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                    value={formData.motoristaEntra}
-                    onChange={(e) => setFormData({...formData, motoristaEntra: e.target.value})}
+                    value={formData.condutorEntra}
+                    onChange={(e) => setFormData({...formData, condutorEntra: e.target.value})}
                     required
                   >
                     <option value="">Selecione o policial</option>
@@ -860,8 +1026,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                     type="tel"
                     className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
                     placeholder="(81) 9..."
-                    value={formData.telMotoristaEntra}
-                    onChange={(e) => setFormData({...formData, telMotoristaEntra: e.target.value})}
+                    value={formData.telCondutorEntra}
+                    onChange={(e) => setFormData({...formData, telCondutorEntra: e.target.value})}
                     required
                   />
                 </div>
@@ -1126,8 +1292,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
                     <SummaryItem label="Hora Armou" value={formData.horaArmou} />
-                    <SummaryItem label="CONDUTOR Sai" value={formData.motoristaSai} />
-                    <SummaryItem label="CONDUTOR Entra" value={formData.motoristaEntra} />
+                    <SummaryItem label="CONDUTOR Sai" value={formData.condutorSai} />
+                    <SummaryItem label="CONDUTOR Entra" value={formData.condutorEntra} />
                   </div>
 
                   {/* Editable Fields (Finalization) */}
@@ -1249,7 +1415,9 @@ Gerado via ViaturaCheck 14º BPM.`;
         </form>
         </>
         ) : (
-          <div className="space-y-6">
+          <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+            {activeTab === 'history' ? (
+              <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-pmpe-blue">Histórico de Checklists</h2>
               <span className="bg-pmpe-blue/10 text-pmpe-blue px-3 py-1 rounded-full text-[10px] font-bold uppercase">
@@ -1310,7 +1478,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                             <Edit3 className="w-5 h-5" />
                           </button>
                           <button 
-                            onClick={() => deleteFromHistory(index)}
+                            onClick={() => deleteFromHistory(entry.id || '')}
                             className="p-3 bg-pmpe-red/5 text-pmpe-red rounded-2xl hover:bg-pmpe-red/10 transition-all"
                             title="Excluir"
                           >
@@ -1322,7 +1490,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/10">
                           <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">CONDUTOR</span>
-                          <span className="text-xs font-medium text-pmpe-blue truncate">{entry.motoristaEntra.split('/')[1] || entry.motoristaEntra}</span>
+                          <span className="text-xs font-medium text-pmpe-blue truncate">{entry.condutorEntra.split('/')[1] || entry.condutorEntra}</span>
                         </div>
                         <div className="p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/10">
                           <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">KM Inicial</span>
@@ -1345,6 +1513,99 @@ Gerado via ViaturaCheck 14º BPM.`;
               </div>
             )}
           </div>
+        ) : (
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-pmpe-blue">Configurações Administrativas</h2>
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-pmpe-red text-xs font-bold uppercase tracking-widest hover:opacity-70 transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                Sair
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-4">
+                <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
+                  <Layout className="w-5 h-5 text-pmpe-blue opacity-60" />
+                  <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Gerenciamento de Dados</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <button 
+                    onClick={clearHistory}
+                    className="w-full p-4 bg-pmpe-red/5 text-pmpe-red rounded-2xl text-sm font-bold flex items-center justify-between hover:bg-pmpe-red/10 transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Trash2 className="w-5 h-5" />
+                      <span>Limpar Todo o Histórico</span>
+                    </div>
+                    <ArrowRightLeft className="w-4 h-4 opacity-30" />
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(history));
+                      const downloadAnchorNode = document.createElement('a');
+                      downloadAnchorNode.setAttribute("href",     dataStr);
+                      downloadAnchorNode.setAttribute("download", `historico_viaturacheck_${new Date().toISOString().split('T')[0]}.json`);
+                      document.body.appendChild(downloadAnchorNode);
+                      downloadAnchorNode.click();
+                      downloadAnchorNode.remove();
+                    }}
+                    className="w-full p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl text-sm font-bold flex items-center justify-between hover:bg-pmpe-blue/10 transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5" />
+                      <span>Exportar Dados (JSON)</span>
+                    </div>
+                    <ArrowRightLeft className="w-4 h-4 opacity-30" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-4">
+                <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
+                  <LogOut className="w-5 h-5 text-pmpe-red opacity-60" />
+                  <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Sessão</h3>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-xs text-black/60">Você está logado como <span className="font-bold text-pmpe-blue">{user?.email}</span>.</p>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full bg-white text-pmpe-red border-2 border-pmpe-red/20 p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-red/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sair da Conta
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-4">
+                <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
+                  <User className="w-5 h-5 text-pmpe-blue opacity-60" />
+                  <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Informações do Sistema</h3>
+                </div>
+                
+                <div className="space-y-4 text-sm">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                    <span className="text-gray-400 font-medium">Versão do App</span>
+                    <span className="font-bold text-pmpe-blue">2.0.0 (PWA)</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                    <span className="text-gray-400 font-medium">Batalhão</span>
+                    <span className="font-bold text-pmpe-blue">14º BPM - PMPE</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                    <span className="text-gray-400 font-medium">Total de Registros Local</span>
+                    <span className="font-bold text-pmpe-blue">{history.length}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* External Link Section */}
@@ -1363,6 +1624,70 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       {/* Success Modal */}
       <AnimatePresence>
+        {showAdminLogin && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-[40px] w-full max-w-md p-8 shadow-2xl space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-pmpe-blue/10 rounded-2xl flex items-center justify-center text-pmpe-blue">
+                    <Settings className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-pmpe-blue">Acesso Restrito</h2>
+                    <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">Administração 14º BPM</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowAdminLogin(false);
+                    setAdminPassword('');
+                    setLoginError(false);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-gray-400" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAdminLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase opacity-40 text-pmpe-blue tracking-widest">Senha de Administrador</label>
+                  <input 
+                    type="password"
+                    autoFocus
+                    className={`w-full p-4 bg-[#F9F9F7] border ${loginError ? 'border-pmpe-red' : 'border-black/10'} rounded-2xl text-center text-xl tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-pmpe-blue/20`}
+                    value={adminPassword}
+                    onChange={(e) => {
+                      setAdminPassword(e.target.value);
+                      setLoginError(false);
+                    }}
+                    placeholder="••••••••"
+                  />
+                  {loginError && (
+                    <p className="text-[10px] text-pmpe-red font-bold text-center uppercase tracking-wider">Senha incorreta. Tente novamente.</p>
+                  )}
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full py-4 bg-pmpe-blue text-white rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-pmpe-blue/90 shadow-lg shadow-pmpe-blue/20 transition-all"
+                >
+                  Entrar no Painel
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
         {showSuccess && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -1470,7 +1795,16 @@ Gerado via ViaturaCheck 14º BPM.`;
           <Layout className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase">Histórico</span>
         </button>
-        <button className="flex flex-col items-center gap-1 opacity-40 text-pmpe-blue">
+        <button 
+          onClick={() => {
+            if (isAdmin) {
+              setActiveTab('settings');
+            } else {
+              setShowAdminLogin(true);
+            }
+          }}
+          className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'settings' ? 'text-pmpe-blue scale-110' : 'opacity-40 text-pmpe-blue'}`}
+        >
           <Settings className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase">Ajustes</span>
         </button>

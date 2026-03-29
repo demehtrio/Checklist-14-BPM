@@ -4,10 +4,10 @@ export interface ChecklistData {
   servico: string;
   dataArmou: string;
   horaArmou: string;
-  motoristaSai: string;
-  telMotoristaSai: string;
-  motoristaEntra: string;
-  telMotoristaEntra: string;
+  condutorSai: string;
+  telCondutorSai: string;
+  condutorEntra: string;
+  telCondutorEntra: string;
   viatura: string;
   placa: string;
   prefixo: string;
@@ -40,10 +40,10 @@ export const checklistSchema = {
     servico: { type: Type.STRING, description: "Tipo de serviço (GUARNIÇÃO, PJES, MISSÃO ADM, VIAGEM, OPERAÇÃO)" },
     dataArmou: { type: Type.STRING, description: "Data da inspeção (DD/MM/AAAA)" },
     horaArmou: { type: Type.STRING, description: "Horário que armou (HH:MM)" },
-    motoristaSai: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que sai" },
-    telMotoristaSai: { type: Type.STRING, description: "Telefone do condutor que sai" },
-    motoristaEntra: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que entra" },
-    telMotoristaEntra: { type: Type.STRING, description: "Telefone do condutor que entra" },
+    condutorSai: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que sai" },
+    telCondutorSai: { type: Type.STRING, description: "Telefone do condutor que sai" },
+    condutorEntra: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que entra" },
+    telCondutorEntra: { type: Type.STRING, description: "Telefone do condutor que entra" },
     viatura: { type: Type.STRING, description: "Identificação da viatura (ex: 6491/Doblô Fiat)" },
     placa: { type: Type.STRING, description: "Placa da viatura (ex: ABC-1234)" },
     prefixo: { type: Type.STRING, description: "Prefixo operacional (ex: GT 14111)" },
