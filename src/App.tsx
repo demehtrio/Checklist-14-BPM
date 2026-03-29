@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ClipboardCheck, 
   Car, 
@@ -17,7 +17,13 @@ import {
   Camera,
   X,
   Trash2,
-  Edit3
+  Edit3,
+  Clock,
+  Mail,
+  ArrowRightLeft,
+  LogIn,
+  LogOut,
+  Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -137,12 +143,77 @@ const SummaryItem = ({ label, value }: { label: string, value: string | string[]
 );
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'check' | 'history'>('check');
+  const [history, setHistory] = useState<ChecklistData[]>([]);
   const [formData, setFormData] = useState<ChecklistData>(INITIAL_STATE);
   const [aiInput, setAiInput] = useState('');
   const [isParsing, setIsParsing] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('viatura_history');
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error('Failed to load history', e);
+      }
+    }
+
+    const savedCurrent = localStorage.getItem('viatura_current_form');
+    if (savedCurrent) {
+      try {
+        setFormData(JSON.parse(savedCurrent));
+      } catch (e) {
+        console.error('Failed to load current form', e);
+      }
+    }
+
+    const savedSubmitted = localStorage.getItem('viatura_is_submitted');
+    if (savedSubmitted === 'true') setIsSubmitted(true);
+
+    const savedShowSuccess = localStorage.getItem('viatura_show_success');
+    if (savedShowSuccess === 'true') setShowSuccess(true);
+
+    const savedTab = localStorage.getItem('viatura_active_tab');
+    if (savedTab === 'history') setActiveTab('history');
+  }, []);
+
+  // Save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('viatura_history', JSON.stringify(history));
+  }, [history]);
+
+  useEffect(() => {
+    localStorage.setItem('viatura_current_form', JSON.stringify(formData));
+    localStorage.setItem('viatura_is_submitted', String(isSubmitted));
+    localStorage.setItem('viatura_show_success', String(showSuccess));
+    localStorage.setItem('viatura_active_tab', activeTab);
+  }, [formData, isSubmitted, showSuccess, activeTab]);
+
+  // Sync formData to history when submitted
+  useEffect(() => {
+    if (isSubmitted) {
+      const existingIndex = history.findIndex(h => 
+        h.viatura === formData.viatura && 
+        h.dataArmou === formData.dataArmou && 
+        h.horaArmou === formData.horaArmou
+      );
+
+      if (existingIndex >= 0) {
+        const entry = history[existingIndex];
+        // Only update if there's an actual change to avoid infinite loops
+        if (JSON.stringify(entry) !== JSON.stringify(formData)) {
+          const newHistory = [...history];
+          newHistory[existingIndex] = { ...formData };
+          setHistory(newHistory);
+        }
+      }
+    }
+  }, [formData, isSubmitted, history]);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
@@ -163,6 +234,22 @@ export default function App() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Checklist Submitted:', formData);
+    
+    // Add to history or update existing entry
+    const existingIndex = history.findIndex(h => 
+      h.viatura === formData.viatura && 
+      h.dataArmou === formData.dataArmou && 
+      h.horaArmou === formData.horaArmou
+    );
+
+    if (existingIndex >= 0) {
+      const newHistory = [...history];
+      newHistory[existingIndex] = { ...formData };
+      setHistory(newHistory);
+    } else {
+      setHistory([formData, ...history]);
+    }
+
     setIsSubmitted(true);
     setShowSuccess(true);
   };
@@ -176,6 +263,22 @@ export default function App() {
     });
     setIsSubmitted(false);
     setShowSuccess(false);
+    localStorage.removeItem('viatura_current_form');
+    localStorage.removeItem('viatura_is_submitted');
+    localStorage.removeItem('viatura_show_success');
+  };
+
+  const resumeFromHistory = (entry: ChecklistData) => {
+    setFormData(entry);
+    setIsSubmitted(false);
+    setShowSuccess(false);
+    setActiveTab('check');
+  };
+
+  const deleteFromHistory = (index: number) => {
+    const newHistory = [...history];
+    newHistory.splice(index, 1);
+    setHistory(newHistory);
   };
 
   const toggleArrayItem = (field: keyof ChecklistData, item: string) => {
@@ -234,7 +337,7 @@ export default function App() {
     // Extract matricula from motoristaEntra (usually Grad / Nome / Mat)
     const matMatch = formData.motoristaEntra.match(/(\d+[-\d]*)$/);
     const matricula = matMatch ? matMatch[1] : '';
-    const motoristaNome = formData.motoristaEntra.split('/')[1]?.trim() || formData.motoristaEntra.split('/')[0]?.trim() || formData.motoristaEntra;
+    const condutorNome = formData.motoristaEntra.split('/')[1]?.trim() || formData.motoristaEntra.split('/')[0]?.trim() || formData.motoristaEntra;
 
     const message = `🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
@@ -246,11 +349,108 @@ export default function App() {
 ⌚ Hora que armou: ${formData.horaArmou}
 🔐 Km final: ${formData.kmFinal}
 ⌚ Hora que desarmou: ${formData.horaDesarmou}
-👮🏻‍♂️ Mot: ${motoristaNome}
+👮🏻‍♂️ Condutor: ${condutorNome}
 ⚠️ Mat: ${matricula}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+  };
+
+  const shareCheckInWhatsApp = () => {
+    const parts = formData.viatura.split('/');
+    let patrimonio = parts[0];
+    let placaFromVtr = '';
+    let modelo = '';
+
+    if (parts.length === 3) [patrimonio, placaFromVtr, modelo] = parts;
+    else if (parts.length === 2) [patrimonio, modelo] = parts;
+
+    const placaFinal = formData.placa || placaFromVtr;
+    const prefixoFormatado = formData.prefixo.split(' - ')[0];
+    const matMatch = formData.motoristaEntra.match(/(\d+[-\d]*)$/);
+    const matricula = matMatch ? matMatch[1] : '';
+    const condutorNome = formData.motoristaEntra.split('/')[1]?.trim() || formData.motoristaEntra.split('/')[0]?.trim() || formData.motoristaEntra;
+
+    const message = `✅ *CHECK-IN VIATURA*
+🪙 Pat: ${patrimonio.trim() || ''}
+⛔ Placa: ${placaFinal.trim() || ''}
+📟 Prefixo: ${prefixoFormatado.trim()}
+🧮 Emprego: ${formData.servico}
+🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
+🔓 Km inic: ${formData.kmInicial}
+📅 Data: ${formData.dataArmou}
+⌚ Hora que armou: ${formData.horaArmou}
+👮🏻‍♂️ Condutor: ${condutorNome}
+⚠️ Mat: ${matricula}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+  };
+
+  const shareCheckOutWhatsApp = () => {
+    const parts = formData.viatura.split('/');
+    let patrimonio = parts[0];
+    let placaFromVtr = '';
+    let modelo = '';
+
+    if (parts.length === 3) [patrimonio, placaFromVtr, modelo] = parts;
+    else if (parts.length === 2) [patrimonio, modelo] = parts;
+
+    const placaFinal = formData.placa || placaFromVtr;
+    const prefixoFormatado = formData.prefixo.split(' - ')[0];
+    const matMatch = formData.motoristaEntra.match(/(\d+[-\d]*)$/);
+    const matricula = matMatch ? matMatch[1] : '';
+    const condutorNome = formData.motoristaEntra.split('/')[1]?.trim() || formData.motoristaEntra.split('/')[0]?.trim() || formData.motoristaEntra;
+
+    const message = `🏁 *CHECK-OUT VIATURA*
+🪙 Pat: ${patrimonio.trim() || ''}
+⛔ Placa: ${placaFinal.trim() || ''}
+📟 Prefixo: ${prefixoFormatado.trim()}
+🧮 Emprego: ${formData.servico}
+🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
+🔐 Km final: ${formData.kmFinal}
+📅 Data: ${formData.dataArmou}
+⌚ Hora que desarmou: ${formData.horaDesarmou}
+👮🏻‍♂️ Condutor: ${condutorNome}
+⚠️ Mat: ${matricula}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+  };
+
+  const shareEmail = () => {
+    const subject = `Checklist Viatura - ${formData.viatura} - ${formData.dataArmou}`;
+    const body = `CHECKLIST DE VIATURA - 14º BPM
+
+DADOS DO SERVIÇO:
+Serviço: ${formData.servico}
+Viatura: ${formData.viatura}
+Prefixo: ${formData.prefixo}
+Placa: ${formData.placa}
+Data: ${formData.dataArmou}
+Hora Armou: ${formData.horaArmou}
+Hora Desarmou: ${formData.horaDesarmou}
+
+CONDUTORES:
+Sai: ${formData.motoristaSai}
+Entra: ${formData.motoristaEntra}
+
+KILOMETRAGEM:
+KM Inicial: ${formData.kmInicial}
+KM Final: ${formData.kmFinal}
+
+EQUIPAMENTOS E CONDIÇÕES:
+Equipamentos: ${formData.equipamentos.join(', ')}
+Pneus: ${formData.pneus}
+Limpeza: ${formData.limpeza}
+Óleo Motor: ${formData.oleoMotor}
+
+OBSERVAÇÕES:
+${formData.descricaoAlteracoes || 'Nenhuma alteração registrada.'}
+
+Gerado via ViaturaCheck 14º BPM.`;
+
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const generatePDF = async () => {
@@ -343,12 +543,12 @@ export default function App() {
         ['Mapa Diário', formData.mapaDiario],
       ]);
 
-      // Motoristas
-      addSection('Motoristas', [
-        ['Motorista que Sai', formData.motoristaSai],
-        ['Tel. Motorista Sai', formData.telMotoristaSai],
-        ['Motorista que Entra', formData.motoristaEntra],
-        ['Tel. Motorista Entra', formData.telMotoristaEntra],
+      // CONDUTORES
+      addSection('CONDUTORES', [
+        ['CONDUTOR que Sai', formData.motoristaSai],
+        ['Tel. CONDUTOR Sai', formData.telMotoristaSai],
+        ['CONDUTOR que Entra', formData.motoristaEntra],
+        ['Tel. CONDUTOR Entra', formData.telMotoristaEntra],
       ]);
 
       // Estado Técnico
@@ -458,11 +658,11 @@ export default function App() {
       <header className="bg-pmpe-blue text-white p-6 sticky top-0 z-50 shadow-lg border-b-4 border-pmpe-red">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-18 h-18 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-pmpe-gold/40 shrink-0">
+            <div className="w-18 h-18 flex items-center justify-center shrink-0">
               <img 
-                src="http://www.pm.pe.gov.br/wp-content/uploads/2021/03/logo_14_bpm-150x150.png" 
+                src="https://i.pinimg.com/originals/44/e4/8c/44e48c5ff461edb7623bab64bd898d8d.png" 
                 alt="Brasão 14º BPM" 
-                className="w-12 h-12 object-contain brightness-110 contrast-110"
+                className="w-16 h-16 object-contain brightness-110 contrast-110 drop-shadow-md"
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -481,8 +681,10 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
-        {/* AI Assistant Section */}
-        <section className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+        {activeTab === 'check' ? (
+          <>
+            {/* AI Assistant Section */}
+            <section className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-pmpe-red" />
             <h2 className="font-semibold text-lg text-pmpe-blue">Assistente de Preenchimento</h2>
@@ -607,17 +809,17 @@ export default function App() {
             </div>
           </div>
 
-          {/* Section: Motoristas */}
+          {/* Section: CONDUTORES */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
             <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
               <User className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Motoristas</h3>
+              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">CONDUTORES</h3>
             </div>
             
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase opacity-50">Motorista que Sai (Grad / Nome / Mat)</label>
+                  <label className="text-xs font-bold uppercase opacity-50">CONDUTOR que Sai (Grad / Nome / Mat)</label>
                   <select 
                     className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
                     value={formData.motoristaSai}
@@ -628,7 +830,7 @@ export default function App() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase opacity-50">Telefone Motorista que Sai</label>
+                  <label className="text-xs font-bold uppercase opacity-50">Telefone CONDUTOR que Sai</label>
                   <input 
                     type="tel"
                     className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
@@ -641,7 +843,7 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase opacity-50">Motorista que Entra (Grad / Nome / Mat) *</label>
+                  <label className="text-xs font-bold uppercase opacity-50">CONDUTOR que Entra (Grad / Nome / Mat) *</label>
                   <select 
                     className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
                     value={formData.motoristaEntra}
@@ -653,7 +855,7 @@ export default function App() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase opacity-50">Telefone Motorista que Entra *</label>
+                  <label className="text-xs font-bold uppercase opacity-50">Telefone CONDUTOR que Entra *</label>
                   <input 
                     type="tel"
                     className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
@@ -924,8 +1126,8 @@ export default function App() {
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
                     <SummaryItem label="Hora Armou" value={formData.horaArmou} />
-                    <SummaryItem label="Motorista Sai" value={formData.motoristaSai} />
-                    <SummaryItem label="Motorista Entra" value={formData.motoristaEntra} />
+                    <SummaryItem label="CONDUTOR Sai" value={formData.motoristaSai} />
+                    <SummaryItem label="CONDUTOR Entra" value={formData.motoristaEntra} />
                   </div>
 
                   {/* Editable Fields (Finalization) */}
@@ -947,50 +1149,203 @@ export default function App() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase opacity-50">Hora que Desarmou</label>
-                        <input 
-                          type="text"
-                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                          value={formData.horaDesarmou}
-                          onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                          placeholder="HH:MM"
-                        />
+                        <div className="relative">
+                          <input 
+                            type="text"
+                            className="w-full p-4 pr-12 bg-white border border-pmpe-blue/10 rounded-2xl text-sm focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
+                            value={formData.horaDesarmou}
+                            onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
+                            placeholder="HH:MM"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
+                            title="Usar hora atual"
+                          >
+                            <Clock className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <p className="text-[9px] text-pmpe-blue/60 italic text-center">Preencha estes campos para que o PDF e o WhatsApp sejam gerados com os dados de encerramento.</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="w-full bg-gray-100 text-gray-600 p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-gray-200 transition-all shadow-md flex items-center justify-center gap-3"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4">
+                    <h4 className="text-[10px] font-bold uppercase text-pmpe-blue/60 tracking-widest flex items-center gap-2">
+                      <ArrowRightLeft className="w-4 h-4" />
+                      Opções de Check-in / Check-out
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={shareCheckInWhatsApp}
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-[#25D366]/10 text-[#128C7E] rounded-2xl hover:bg-[#25D366]/20 transition-all border border-[#25D366]/20"
+                      >
+                        <LogIn className="w-6 h-6" />
+                        <span className="text-[9px] font-bold uppercase">Check-in Zap</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={shareCheckOutWhatsApp}
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-[#25D366]/10 text-[#128C7E] rounded-2xl hover:bg-[#25D366]/20 transition-all border border-[#25D366]/20"
+                      >
+                        <LogOut className="w-6 h-6" />
+                        <span className="text-[9px] font-bold uppercase">Check-out Zap</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4">
+                    <h4 className="text-[10px] font-bold uppercase text-pmpe-blue/60 tracking-widest flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Checklist Completo
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={generatePDF}
+                        disabled={isGeneratingPDF}
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10 disabled:opacity-50"
+                      >
+                        {isGeneratingPDF ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileText className="w-6 h-6 text-pmpe-red" />}
+                        <span className="text-[9px] font-bold uppercase">Gerar PDF</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={shareEmail}
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
+                      >
+                        <Mail className="w-6 h-6" />
+                        <span className="text-[9px] font-bold uppercase">Enviar E-mail</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={shareWhatsApp}
+                    className="w-full bg-[#25D366] text-white p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-[#128C7E] transition-all shadow-xl flex items-center justify-center gap-3"
+                  >
+                    <MessageCircle className="w-6 h-6" />
+                    WhatsApp Completo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="w-full bg-gray-100 text-gray-600 p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-gray-200 transition-all shadow-md flex items-center justify-center gap-3"
+                  >
+                    <Layout className="w-6 h-6" />
+                    Novo Checklist
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </form>
+        </>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-pmpe-blue">Histórico de Checklists</h2>
+              <span className="bg-pmpe-blue/10 text-pmpe-blue px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+                {history.length} Registros
+              </span>
+            </div>
+
+            {history.length === 0 ? (
+              <div className="bg-white rounded-[40px] p-12 text-center border border-pmpe-blue/10 shadow-xl">
+                <div className="w-20 h-20 bg-pmpe-blue/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ClipboardCheck className="w-10 h-10 text-pmpe-blue/20" />
+                </div>
+                <h3 className="text-lg font-bold text-pmpe-blue">Nenhum registro encontrado</h3>
+                <p className="text-sm text-gray-500 mt-2">Os checklists realizados aparecerão aqui.</p>
+                <button 
+                  onClick={() => setActiveTab('check')}
+                  className="mt-6 bg-pmpe-blue text-white px-6 py-3 rounded-2xl font-bold uppercase text-xs tracking-widest"
                 >
-                  <Layout className="w-6 h-6" />
-                  Novo Checklist
-                </button>
-                <button
-                  type="button"
-                  onClick={generatePDF}
-                  disabled={isGeneratingPDF}
-                  className="w-full bg-white text-pmpe-blue p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-gray-50 transition-all shadow-lg flex items-center justify-center gap-3 border-2 border-pmpe-blue/20 disabled:opacity-50"
-                >
-                  {isGeneratingPDF ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileText className="w-6 h-6 text-pmpe-red" />}
-                  {isGeneratingPDF ? 'Gerando...' : 'Gerar PDF'}
-                </button>
-                <button
-                  type="button"
-                  onClick={shareWhatsApp}
-                  className="w-full bg-[#25D366] text-white p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-[#128C7E] transition-all shadow-xl flex items-center justify-center gap-3"
-                >
-                  <MessageCircle className="w-6 h-6" />
-                  WhatsApp
+                  Iniciar Novo Checklist
                 </button>
               </div>
-            </div>
-          )}
-        </div>
-      </form>
+            ) : (
+              <div className="space-y-4">
+                {history.map((entry, index) => {
+                  const isCompleted = entry.kmFinal && entry.horaDesarmou;
+                  return (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4 relative overflow-hidden"
+                    >
+                      <div className={`absolute top-0 right-0 px-4 py-1 rounded-bl-2xl text-[8px] font-bold uppercase tracking-widest ${isCompleted ? 'bg-green-500 text-white' : 'bg-pmpe-gold text-white'}`}>
+                        {isCompleted ? 'Concluído' : 'Em Aberto'}
+                      </div>
+
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <h3 className="text-lg font-bold text-pmpe-blue">{entry.viatura}</h3>
+                          <div className="flex items-center gap-3 text-[10px] text-gray-500 font-medium uppercase">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {entry.dataArmou}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {entry.horaArmou}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => resumeFromHistory(entry)}
+                            className="p-3 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all"
+                            title="Continuar/Editar"
+                          >
+                            <Edit3 className="w-5 h-5" />
+                          </button>
+                          <button 
+                            onClick={() => deleteFromHistory(index)}
+                            className="p-3 bg-pmpe-red/5 text-pmpe-red rounded-2xl hover:bg-pmpe-red/10 transition-all"
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/10">
+                          <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">CONDUTOR</span>
+                          <span className="text-xs font-medium text-pmpe-blue truncate">{entry.motoristaEntra.split('/')[1] || entry.motoristaEntra}</span>
+                        </div>
+                        <div className="p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/10">
+                          <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">KM Inicial</span>
+                          <span className="text-xs font-medium text-pmpe-blue">{entry.kmInicial}</span>
+                        </div>
+                      </div>
+
+                      {!isCompleted && (
+                        <button 
+                          onClick={() => resumeFromHistory(entry)}
+                          className="w-full py-3 bg-pmpe-gold text-white rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-gold/90 transition-all flex items-center justify-center gap-2"
+                        >
+                          <ArrowRightLeft className="w-4 h-4" />
+                          Finalizar Check-out
+                        </button>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* External Link Section */}
         <div className="mt-8">
@@ -1035,14 +1390,40 @@ export default function App() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] font-bold uppercase text-pmpe-blue/60">Hora que Desarmou</label>
-                  <input 
-                    type="text"
-                    className="w-full p-2 bg-white border border-pmpe-blue/10 rounded-lg text-sm"
-                    value={formData.horaDesarmou}
-                    onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                    placeholder="HH:MM"
-                  />
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      className="w-full p-2 pr-10 bg-white border border-pmpe-blue/10 rounded-lg text-sm"
+                      value={formData.horaDesarmou}
+                      onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
+                      placeholder="HH:MM"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
+                    >
+                      <Clock className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={shareCheckInWhatsApp}
+                  className="flex flex-col items-center justify-center gap-1 py-3 bg-[#25D366]/10 text-[#128C7E] rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-[#25D366]/20 transition-all border border-[#25D366]/20"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Check-in Zap
+                </button>
+                <button
+                  onClick={shareCheckOutWhatsApp}
+                  className="flex flex-col items-center justify-center gap-1 py-3 bg-[#25D366]/10 text-[#128C7E] rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-[#25D366]/20 transition-all border border-[#25D366]/20"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Check-out Zap
+                </button>
               </div>
 
               <div className="flex flex-col gap-2 pt-2">
@@ -1075,11 +1456,17 @@ export default function App() {
 
       {/* Bottom Nav (Mobile) */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-pmpe-blue/10 p-4 flex justify-around md:hidden z-40">
-        <button className="flex flex-col items-center gap-1 text-pmpe-blue">
+        <button 
+          onClick={() => setActiveTab('check')}
+          className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'check' ? 'text-pmpe-blue scale-110' : 'opacity-40 text-pmpe-blue'}`}
+        >
           <ClipboardCheck className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase">Check</span>
         </button>
-        <button className="flex flex-col items-center gap-1 opacity-40 text-pmpe-blue">
+        <button 
+          onClick={() => setActiveTab('history')}
+          className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'history' ? 'text-pmpe-blue scale-110' : 'opacity-40 text-pmpe-blue'}`}
+        >
           <Layout className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase">Histórico</span>
         </button>
