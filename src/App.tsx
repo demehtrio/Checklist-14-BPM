@@ -1094,14 +1094,24 @@ Gerado via ViaturaCheck 14º BPM.`;
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase opacity-50">Hora que Armou *</label>
-                <input 
-                  type="text"
-                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                  value={formData.horaArmou}
-                  onChange={(e) => setFormData({...formData, horaArmou: e.target.value})}
-                  placeholder="HH:MM"
-                  required
-                />
+                <div className="relative">
+                  <input 
+                    type="text"
+                    className="w-full p-3 pr-12 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
+                    value={formData.horaArmou}
+                    onChange={(e) => setFormData({...formData, horaArmou: e.target.value})}
+                    placeholder="HH:MM"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({...formData, horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
+                    title="Usar hora atual"
+                  >
+                    <Clock className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1205,12 +1215,23 @@ Gerado via ViaturaCheck 14º BPM.`;
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase opacity-50">Hora que Desarmou</label>
-                <input 
-                  type="text"
-                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                  value={formData.horaDesarmou}
-                  onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                />
+                <div className="relative">
+                  <input 
+                    type="text"
+                    className="w-full p-3 pr-12 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
+                    value={formData.horaDesarmou}
+                    onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
+                    placeholder="HH:MM"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
+                    title="Usar hora atual"
+                  >
+                    <Clock className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
 
