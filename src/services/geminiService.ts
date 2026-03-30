@@ -1,7 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 export interface ChecklistData {
+  id?: string;
+  userId?: string;
+  createdAt?: any;
   servico: string;
+  funcao: string;
   dataArmou: string;
   horaArmou: string;
   condutorSai: string;
@@ -38,6 +42,7 @@ export const checklistSchema = {
   type: Type.OBJECT,
   properties: {
     servico: { type: Type.STRING, description: "Tipo de serviço (GUARNIÇÃO, PJES, MISSÃO ADM, VIAGEM, OPERAÇÃO)" },
+    funcao: { type: Type.STRING, description: "Função do condutor (MOTORISTA, COMANDANTE, PATRULHEIRO, etc.)" },
     dataArmou: { type: Type.STRING, description: "Data da inspeção (DD/MM/AAAA)" },
     horaArmou: { type: Type.STRING, description: "Horário que armou (HH:MM)" },
     condutorSai: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que sai" },

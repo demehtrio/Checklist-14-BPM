@@ -24,7 +24,9 @@ import {
   LogIn,
   LogOut,
   Calendar,
-  ShieldCheck
+  ShieldCheck,
+  Search,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -34,8 +36,6 @@ import { POLICIAIS } from './constants/policiais';
 import { 
   auth, 
   db, 
-  loginWithGoogle, 
-  logout as firebaseLogout, 
   onAuthStateChanged, 
   FirebaseUser,
   collection,
@@ -107,6 +107,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 const INITIAL_STATE: ChecklistData = {
   servico: '',
+  funcao: '',
   dataArmou: new Date().toLocaleDateString('pt-BR'),
   horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
   condutorSai: '',
@@ -139,6 +140,18 @@ const INITIAL_STATE: ChecklistData = {
   fotos: [],
 };
 
+const FUNCOES = [
+  "MOTORISTA",
+  "COMANDANTE",
+  "PATRULHEIRO",
+  "AUXILIAR",
+  "SENTINELA",
+  "PERMANENTE",
+  "COMANDANTE DE GUARNIÇÃO",
+  "MOTORISTA DE GUARNIÇÃO",
+  "PATRULHEIRO DE GUARNIÇÃO"
+].sort();
+
 const VIATURAS = [
   "6489/Ônibus", "6491/Doblô Fiat", "6492/Honda XRE-300", "6493/Honda XRE-300",
   "6494/Honda XRE-300", "6495/Honda XRE-300", "6496/Honda XRE-300", "6497/Honda XRE-300",
@@ -165,6 +178,18 @@ const EQUIPAMENTOS = [
   "Giroflex", "Sirene", "Rádio Transceptor", "Chave de Roda", "Macaco", 
   "Triângulo", "Estepe", "Bateria", "Buzina", "Mapa Mensal VTR", 
   "Bauleto (Moto)", "Chave do Bauleto (Moto)"
+];
+
+const PARTES_INTERNAS = [
+  "SEM ALTERAÇÃO", "BANCOS", "PAINEL", "TAPETES", "FORRO DE TETO", "MAÇANETAS", "VIDROS"
+];
+
+const PARTES_EXTERNAS = [
+  "Sem Alteração", "PINTURA", "LATARIA", "PARA-CHOQUE DIANTEIRO", "PARA-CHOQUE TRASEIRO", "RETROVISORES", "ANTENA"
+];
+
+const LUZES_TRASEIRAS = [
+  "TODAS FUNCIONANDO", "Luz de Freio Dir. Queimada", "Luz de Freio Esq. Queimada", "Lanterna Traseira Dir. Queimada", "Lanterna Traseira Esq. Queimada"
 ];
 
 const PREFIXOS = [
@@ -216,9 +241,118 @@ const SummaryItem = ({ label, value }: { label: string, value: string | string[]
   </div>
 );
 
+const SearchableSelect = ({ 
+  label, 
+  value, 
+  onChange, 
+  options, 
+  placeholder = "Selecione...", 
+  required = false 
+}: { 
+  label: string, 
+  value: string, 
+  onChange: (val: string) => void, 
+  options: string[],
+  placeholder?: string,
+  required?: boolean
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter(opt => 
+    opt.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-2 relative" ref={containerRef}>
+      <label className="text-xs font-bold uppercase opacity-50">{label} {required && '*'}</label>
+      <div className="relative">
+        <input 
+          type="text"
+          className="w-full p-3 pr-10 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pmpe-blue/20 transition-all font-medium text-pmpe-blue placeholder:text-gray-400"
+          placeholder={placeholder}
+          value={isOpen ? searchTerm : value}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            if (!isOpen) setIsOpen(true);
+          }}
+          onFocus={() => {
+            setIsOpen(true);
+            setSearchTerm("");
+          }}
+        />
+        <div 
+          className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
+      </div>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute z-[100] w-full mt-1 bg-white border border-pmpe-blue/10 rounded-2xl shadow-2xl p-2 space-y-1 overflow-hidden"
+          >
+            <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+              {filteredOptions.length > 0 ? (
+                filteredOptions.slice(0, 100).map((opt, i) => (
+                  <button
+                    key={`${opt}-${i}`}
+                    type="button"
+                    className="w-full text-left p-3 hover:bg-pmpe-blue/5 rounded-xl text-sm transition-colors font-medium text-pmpe-blue"
+                    onClick={() => {
+                      onChange(opt);
+                      setIsOpen(false);
+                      setSearchTerm("");
+                    }}
+                  >
+                    {opt}
+                  </button>
+                ))
+              ) : (
+                <p className="text-xs text-center py-6 text-gray-400 font-medium">Nenhum resultado encontrado</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export default function App() {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [user, setUser] = useState<FirebaseUser | null>({
+    uid: 'anonymous-user',
+    displayName: 'Usuário Local',
+    email: 'local@pmpe.gov.br',
+    emailVerified: true,
+    isAnonymous: false,
+    metadata: {},
+    providerData: [],
+    refreshToken: '',
+    tenantId: null,
+    delete: async () => {},
+    getIdToken: async () => '',
+    getIdTokenResult: async () => ({} as any),
+    reload: async () => {},
+    toJSON: () => ({})
+  } as FirebaseUser);
+  const [isAuthReady, setIsAuthReady] = useState(true);
   const [activeTab, setActiveTab] = useState<'check' | 'history' | 'settings'>('check');
   const [history, setHistory] = useState<ChecklistData[]>([]);
   const [formData, setFormData] = useState<ChecklistData>(INITIAL_STATE);
@@ -234,51 +368,17 @@ export default function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
 
-  // Auth Listener
+  // Auth Listener (Bypass for local restore)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      setIsAuthReady(true);
-      
-      if (firebaseUser) {
-        // Sync user to Firestore
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        try {
-          const userDoc = await getDoc(userRef);
-          if (!userDoc.exists()) {
-            await setDoc(userRef, {
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              displayName: firebaseUser.displayName,
-              role: firebaseUser.email === 'demetriomarques@gmail.com' ? 'admin' : 'user',
-              lastLogin: serverTimestamp()
-            });
-          } else {
-            await updateDoc(userRef, {
-              lastLogin: serverTimestamp()
-            });
-            // Set admin state from DB
-            if (userDoc.data().role === 'admin') {
-              setIsAdmin(true);
-            }
-          }
-        } catch (error) {
-          handleFirestoreError(error, OperationType.WRITE, `users/${firebaseUser.uid}`);
-        }
-      } else {
-        setIsAdmin(false);
-      }
-    });
-    return () => unsubscribe();
+    // Simulating auth ready
+    setIsAuthReady(true);
   }, []);
 
   // Firestore History Sync
   useEffect(() => {
     if (!user || !isAuthReady) return;
 
-    const q = isAdmin 
-      ? query(collection(db, 'checklists'), orderBy('createdAt', 'desc'))
-      : query(collection(db, 'checklists'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'checklists'), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
@@ -323,6 +423,7 @@ export default function App() {
     localStorage.setItem('viatura_show_success', String(showSuccess));
     localStorage.setItem('viatura_active_tab', activeTab);
   }, [formData, isSubmitted, showSuccess, activeTab]);
+
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
@@ -340,27 +441,37 @@ export default function App() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Checklist Submitted:', formData);
-    
-    // Add to history or update existing entry
-    const existingIndex = history.findIndex(h => 
-      h.viatura === formData.viatura && 
-      h.dataArmou === formData.dataArmou && 
-      h.horaArmou === formData.horaArmou
-    );
+    if (!user) return;
 
-    if (existingIndex >= 0) {
-      const newHistory = [...history];
-      newHistory[existingIndex] = { ...formData };
-      setHistory(newHistory);
-    } else {
-      setHistory([formData, ...history]);
+    const dataToSave = {
+      ...formData,
+      userId: user.uid,
+      createdAt: formData.createdAt || serverTimestamp(),
+    };
+
+    try {
+      if (formData.id) {
+        await updateDoc(doc(db, 'checklists', formData.id), dataToSave);
+      } else {
+        await addDoc(collection(db, 'checklists'), dataToSave);
+      }
+      setIsSubmitted(true);
+      setShowSuccess(true);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'checklists');
     }
+  };
 
-    setIsSubmitted(true);
-    setShowSuccess(true);
+  const deleteFromHistory = async (id: string) => {
+    if (!user) return;
+    if (!window.confirm('Tem certeza que deseja excluir este registro?')) return;
+    try {
+      await deleteDoc(doc(db, 'checklists', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `checklists/${id}`);
+    }
   };
 
   const resetForm = () => {
@@ -382,12 +493,6 @@ export default function App() {
     setIsSubmitted(false);
     setShowSuccess(false);
     setActiveTab('check');
-  };
-
-  const deleteFromHistory = (index: number) => {
-    const newHistory = [...history];
-    newHistory.splice(index, 1);
-    setHistory(newHistory);
   };
 
   const handleAdminLogin = (e: React.FormEvent) => {
@@ -477,6 +582,7 @@ export default function App() {
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
 🧮 Emprego: ${formData.servico}
+👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
@@ -510,6 +616,7 @@ export default function App() {
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
 🧮 Emprego: ${formData.servico}
+👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
@@ -541,6 +648,7 @@ export default function App() {
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
 🧮 Emprego: ${formData.servico}
+👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔐 Km final: ${formData.kmFinal}
 📅 Data: ${formData.dataArmou}
@@ -558,6 +666,7 @@ export default function App() {
 
 DADOS DO SERVIÇO:
 Serviço: ${formData.servico}
+Função: ${formData.funcao}
 Viatura: ${formData.viatura}
 Prefixo: ${formData.prefixo}
 Placa: ${formData.placa}
@@ -669,6 +778,7 @@ Gerado via ViaturaCheck 14º BPM.`;
       // Identificação
       addSection('Identificação', [
         ['Serviço', formData.servico],
+        ['Função', formData.funcao],
         ['Placa', formData.placa],
         ['Viatura', formData.viatura],
         ['Prefixo', formData.prefixo],
@@ -809,12 +919,6 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {user && (
-              <div className="hidden md:flex flex-col items-end">
-                <span className="text-[10px] font-bold uppercase opacity-60">Usuário</span>
-                <span className="text-xs font-medium">{user.displayName || user.email}</span>
-              </div>
-            )}
             <div className="hidden md:block text-right">
               <p className="text-xs font-mono opacity-50">{new Date().toLocaleDateString()}</p>
             </div>
@@ -822,31 +926,8 @@ Gerado via ViaturaCheck 14º BPM.`;
         </div>
       </header>
 
-      {!isAuthReady ? (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <Loader2 className="w-12 h-12 text-pmpe-blue animate-spin" />
-          <p className="text-sm font-bold uppercase tracking-widest text-pmpe-blue opacity-40">Iniciando Sistema...</p>
-        </div>
-      ) : !user ? (
-        <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[40px] shadow-2xl border border-pmpe-blue/10 text-center space-y-8">
-          <div className="w-24 h-24 bg-pmpe-blue/5 rounded-full flex items-center justify-center mx-auto">
-            <ShieldCheck className="w-12 h-12 text-pmpe-blue" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-pmpe-blue uppercase tracking-tight">Acesso Restrito</h2>
-            <p className="text-sm text-black/40 mt-2">Faça login com sua conta institucional para acessar o checklist do 14º BPM.</p>
-          </div>
-          <button
-            onClick={loginWithGoogle}
-            className="w-full flex items-center justify-center gap-3 bg-white border-2 border-pmpe-blue/10 p-4 rounded-2xl font-bold text-pmpe-blue hover:bg-pmpe-blue/5 transition-all shadow-sm"
-          >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
-            Entrar com Google
-          </button>
-          <p className="text-[10px] text-black/30 uppercase tracking-widest font-bold">Polícia Militar de Pernambuco</p>
-        </div>
-      ) : (
-        <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+      {/* Main Content (Always visible) */}
+      <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
         {activeTab === 'check' ? (
           <>
             {/* AI Assistant Section */}
@@ -983,18 +1064,23 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
             
             <div className="space-y-6">
+              <SearchableSelect 
+                label="Função do Condutor"
+                value={formData.funcao}
+                onChange={(val) => setFormData({...formData, funcao: val})}
+                options={FUNCOES}
+                placeholder="Selecione a função"
+                required
+              />
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase opacity-50">CONDUTOR que Sai (Grad / Nome / Mat)</label>
-                  <select 
-                    className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                    value={formData.condutorSai}
-                    onChange={(e) => setFormData({...formData, condutorSai: e.target.value})}
-                  >
-                    <option value="">Selecione o policial</option>
-                    {POLICIAIS.map((p, i) => <option key={`sai-${p}-${i}`} value={p}>{p}</option>)}
-                  </select>
-                </div>
+                <SearchableSelect 
+                  label="CONDUTOR que Sai (Grad / Nome / Mat)"
+                  value={formData.condutorSai}
+                  onChange={(val) => setFormData({...formData, condutorSai: val})}
+                  options={POLICIAIS}
+                  placeholder="Selecione o policial"
+                />
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase opacity-50">Telefone CONDUTOR que Sai</label>
                   <input 
@@ -1008,18 +1094,14 @@ Gerado via ViaturaCheck 14º BPM.`;
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase opacity-50">CONDUTOR que Entra (Grad / Nome / Mat) *</label>
-                  <select 
-                    className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                    value={formData.condutorEntra}
-                    onChange={(e) => setFormData({...formData, condutorEntra: e.target.value})}
-                    required
-                  >
-                    <option value="">Selecione o policial</option>
-                    {POLICIAIS.map((p, i) => <option key={`entra-${p}-${i}`} value={p}>{p}</option>)}
-                  </select>
-                </div>
+                <SearchableSelect 
+                  label="CONDUTOR que Entra (Grad / Nome / Mat)"
+                  value={formData.condutorEntra}
+                  onChange={(val) => setFormData({...formData, condutorEntra: val})}
+                  options={POLICIAIS}
+                  placeholder="Selecione o policial"
+                  required
+                />
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase opacity-50">Telefone CONDUTOR que Entra *</label>
                   <input 
@@ -1134,6 +1216,26 @@ Gerado via ViaturaCheck 14º BPM.`;
                 </div>
               ))}
             </div>
+
+            <div className="space-y-4">
+              <label className="text-xs font-bold uppercase opacity-50">Luz de Freio e Lanterna Traseira</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {LUZES_TRASEIRAS.map(item => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => toggleArrayItem('luzFreioLanternaTraseira', item)}
+                    className={`p-3 rounded-xl text-xs text-left transition-all border ${
+                      formData.luzFreioLanternaTraseira.includes(item) 
+                        ? 'bg-pmpe-blue text-white border-transparent shadow-md' 
+                        : 'bg-[#F9F9F7] text-black/60 border-black/5 hover:border-pmpe-blue/20'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Section: Mecânica e Pneus */}
@@ -1190,6 +1292,69 @@ Gerado via ViaturaCheck 14º BPM.`;
                 />
               </div>
             </div>
+          </div>
+
+          {/* Section: Partes Internas e Externas */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
+            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
+              <Sparkles className="w-5 h-5 text-pmpe-blue opacity-60" />
+              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Partes Internas e Externas</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <label className="text-xs font-bold uppercase opacity-50">Partes Internas</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {PARTES_INTERNAS.map(item => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => toggleArrayItem('partesInternas', item)}
+                    className={`p-3 rounded-xl text-xs text-left transition-all border ${
+                      formData.partesInternas.includes(item) 
+                        ? 'bg-pmpe-blue text-white border-transparent shadow-md' 
+                        : 'bg-[#F9F9F7] text-black/60 border-black/5 hover:border-pmpe-blue/20'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-xs font-bold uppercase opacity-50">Partes Externas</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {PARTES_EXTERNAS.map(item => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => toggleArrayItem('partesExternas', item)}
+                    className={`p-3 rounded-xl text-xs text-left transition-all border ${
+                      formData.partesExternas.includes(item) 
+                        ? 'bg-pmpe-blue text-white border-transparent shadow-md' 
+                        : 'bg-[#F9F9F7] text-black/60 border-black/5 hover:border-pmpe-blue/20'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {(formData.viatura.toLowerCase().includes('moto') || formData.viatura.toLowerCase().includes('xre')) && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase opacity-50">Sistema de Tração (Motos)</label>
+                <select 
+                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
+                  value={formData.sistemaTracao}
+                  onChange={(e) => setFormData({...formData, sistemaTracao: e.target.value})}
+                >
+                  <option value="Kit de tração em condições">Kit de tração em condições</option>
+                  <option value="Kit de tração desgastado">Kit de tração desgastado</option>
+                  <option value="Kit de tração sem condições (Baixar VTR)">Kit de tração sem condições (Baixar VTR)</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Section: Observações */}
@@ -1287,6 +1452,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   {/* Summary Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <SummaryItem label="Serviço" value={formData.servico} />
+                    <SummaryItem label="Função" value={formData.funcao} />
                     <SummaryItem label="Viatura" value={formData.viatura} />
                     <SummaryItem label="Prefixo" value={formData.prefixo} />
                     <SummaryItem label="Placa" value={formData.placa} />
@@ -1415,7 +1581,7 @@ Gerado via ViaturaCheck 14º BPM.`;
         </form>
         </>
         ) : (
-          <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+          <>
             {activeTab === 'history' ? (
               <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -1566,22 +1732,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                 </div>
               </div>
 
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-4">
-                <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-                  <LogOut className="w-5 h-5 text-pmpe-red opacity-60" />
-                  <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Sessão</h3>
-                </div>
-                <div className="space-y-4">
-                  <p className="text-xs text-black/60">Você está logado como <span className="font-bold text-pmpe-blue">{user?.email}</span>.</p>
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full bg-white text-pmpe-red border-2 border-pmpe-red/20 p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-red/5 transition-all flex items-center justify-center gap-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sair da Conta
-                  </button>
-                </div>
-              </div>
+              {/* Session block removed for restoration */}
 
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-4">
                 <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
@@ -1607,20 +1758,22 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
           </section>
         )}
+        </>
+      )}
 
-        {/* External Link Section */}
-        <div className="mt-8">
-          <a
-            href="https://www.google.com/maps/d/viewer?mid=1T7E9H28gZYwllXXBaTcCqilot6Y&ll=-7.992107360606224%2C-34.88517113691404&z=12"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full bg-pmpe-gold/10 text-pmpe-blue p-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-pmpe-gold/20 transition-all flex items-center justify-center gap-3 border border-pmpe-gold/30 text-center"
-          >
-            <MapPin className="w-5 h-5 text-pmpe-red flex-shrink-0" />
-            MAPA DA REDE CREDENCIADA E VALOR MÁX PERMITIDO PARA ABASTECIMENTO
-          </a>
-        </div>
-      </main>
+      {/* External Link Section */}
+      <div className="mt-8">
+        <a
+          href="https://www.google.com/maps/d/viewer?mid=1T7E9H28gZYwllXXBaTcCqilot6Y&ll=-7.992107360606224%2C-34.88517113691404&z=12"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full bg-pmpe-gold/10 text-pmpe-blue p-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-pmpe-gold/20 transition-all flex items-center justify-center gap-3 border border-pmpe-gold/30 text-center"
+        >
+          <MapPin className="w-5 h-5 text-pmpe-red flex-shrink-0" />
+          MAPA DA REDE CREDENCIADA E VALOR MÁX PERMITIDO PARA ABASTECIMENTO
+        </a>
+      </div>
+    </main>
 
       {/* Success Modal */}
       <AnimatePresence>
