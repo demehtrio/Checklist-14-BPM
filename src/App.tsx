@@ -31,7 +31,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { parseChecklistDescription, ChecklistData } from './services/geminiService';
+import { parseChecklistDescription, ChecklistData, extractLicensePlateFromImage } from './services/geminiService';
 import { POLICIAIS } from './constants/policiais';
 import { 
   auth, 
@@ -358,6 +358,7 @@ export default function App() {
   const [formData, setFormData] = useState<ChecklistData>(INITIAL_STATE);
   const [aiInput, setAiInput] = useState('');
   const [isParsing, setIsParsing] = useState(false);
+  const [isExtractingPlate, setIsExtractingPlate] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -438,6 +439,34 @@ export default function App() {
       console.error(error);
     } finally {
       setIsParsing(false);
+    }
+  };
+
+  const handleExtractPlate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsExtractingPlate(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result as string;
+        const plate = await extractLicensePlateFromImage(base64String);
+        if (plate && plate !== 'NONE') {
+          // Check if plate exists in PLACAS, if not add it or just set it
+          setFormData(prev => ({ ...prev, placa: plate.toUpperCase() }));
+          // Also add the photo to the checklist
+          setFormData(prev => ({ ...prev, fotos: [...prev.fotos, base64String] }));
+        } else {
+          alert('Não foi possível identificar a placa na imagem.');
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao processar a imagem.');
+    } finally {
+      setIsExtractingPlate(false);
     }
   };
 
@@ -984,7 +1013,25 @@ Gerado via ViaturaCheck 14º BPM.`;
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase opacity-50">Placa *</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase opacity-50">Placa *</label>
+                  <label className="cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase text-pmpe-blue hover:text-pmpe-red transition-colors">
+                    {isExtractingPlate ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Camera className="w-3 h-3" />
+                    )}
+                    {isExtractingPlate ? 'Extraindo...' : 'Extrair da Foto'}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment"
+                      className="hidden" 
+                      onChange={handleExtractPlate}
+                      disabled={isExtractingPlate}
+                    />
+                  </label>
+                </div>
                 <select 
                   className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
                   value={formData.placa}
@@ -993,6 +1040,9 @@ Gerado via ViaturaCheck 14º BPM.`;
                 >
                   <option value="">Selecione a placa</option>
                   {PLACAS.map(p => <option key={p} value={p}>{p}</option>)}
+                  {formData.placa && !PLACAS.includes(formData.placa) && (
+                    <option value={formData.placa}>{formData.placa}</option>
+                  )}
                 </select>
               </div>
 
