@@ -152,27 +152,57 @@ const FUNCOES = [
   "PATRULHEIRO DE GUARNIÇÃO"
 ].sort();
 
-const VIATURAS = [
-  "6489/Ônibus", "6491/Doblô Fiat", "6492/Honda XRE-300", "6493/Honda XRE-300",
-  "6494/Honda XRE-300", "6495/Honda XRE-300", "6496/Honda XRE-300", "6497/Honda XRE-300",
-  "6498/Honda XRE-300", "6499/Honda XRE-300", "64100/Honda XRE-300", "64103/Honda XRE-300",
-  "64104/Honda XRE-300", "64105/Honda XRE-300", "64106/Honda XRE-300", "64107/Mitsubishi L200",
-  "64110/PGB5G37/RANGER", "640135/RZZ8G50/DUSTER", "640136/RZZ6G90/DUSTER", "640137/RZZ0F43/DUSTER",
-  "640138/RZZ0F83/DUSTER", "640140/RZZ6E00/DUSTER", "640141/RZZ8H00/DUSTER", "640142/RZY4G58/DUSTER",
-  "640143/RZZ2E03/DUSTER", "640144/SNO0C99/POLO", "640145/SNR1I38/MOTO", "640146/SNR8D25/MOTO",
-  "640147/SNR8A05/MOTO", "640148/SNT5I45/MOTO", "640149/SNU9F56/MOTO", "640150/SNZ8F51/S10",
-  "640151/SNZ4C21/S10", "640152/SNZ4C61/S10", "640153/SOG4H29/S10", "640154/SOG4I59/S10",
-  "640155/SOG4G99/S10", "640156/SOH6A98/S10", "640157/RZY1G98/DUSTER", "640158/SOJ9C78/XRE300",
-  "640159/SOJ6D28/XRE300", "640160/SOJ6D78/XRE300", "640161/UHL2H45/HILUX", "RESERVA/RZZ6D80/DUSTER",
-  "RESERVA/RZX4C63/DUSTER", "1210097/SNN5E90/DUSTER", "1210105/SOB5F10/ARGO", "1210153/SOA9C08/ARGO"
-];
+const VIATURA_MAP: Record<string, string> = {
+  "SNZ8F51": "640150/SNZ8F51/CHEVROLET S-10",
+  "SNZ4C21": "640151/SNZ4C21/CHEVROLET S-10",
+  "SNZ4C61": "640152/SNZ4C61/CHEVROLET S-10",
+  "SOG4H29": "640153/SOG4H29/CHEVROLET S-10",
+  "SOG4I59": "640154/SOG4I59/CHEVROLET S-10",
+  "SOG4G99": "640155/SOG4G99/CHEVROLET S-10",
+  "SOH6A98": "640156/SOH6A98/CHEVROLET S-10",
+  "UHL2H45": "640161/UHL2H45/HILLUX",
+  "RZZ8G50": "640135/RZZ8G50/RENALT DUSTER",
+  "RZZ6G90": "640136/RZZ6G90/RENALT DUSTER",
+  "RZZ0F43": "640137/RZZ0F43/RENALT DUSTER",
+  "RZZ0F83": "640138/RZZ0F83/RENALT DUSTER",
+  "RZZ0G33": "640139/RZZ0G33/RENALT DUSTER",
+  "RZZ6E00": "640140/RZZ6E00/RENALT DUSTER",
+  "RZZ8H00": "640141/RZZ8H00/RENALT DUSTER",
+  "RZY4G58": "640142/RZY4G58/RENALT DUSTER",
+  "RZZ2E03": "640143/RZZ2E03/RENALT DUSTER",
+  "RZY1G98": "640157/RZY1G98/RENALT DUSTER",
+  "SNN5E90": "1210097/SNN5E90/RENALT DUSTER",
+  "PBG5G37": "64110/PBG5G37/FORD RANGER",
+  "QYV7F75": "64107/QYV7F75/MMC L200",
+  "SNO0C99": "640144/SNO0C99/VW POLO",
+  "SOB5F10": "1210105/SOB5F10/FIAT ARGO",
+  "SOA9C08": "1210153/SOA9C08/FIAT ARGO",
+  "PFA5246": "6489/PFA5246/VW VOLARE",
+  "PCK8556": "6491/PCK8556/FIAT DOBLO",
+  "PDS6365": "6492/PDS6365/HONDA XRE300",
+  "PDS6435": "6493/PDS6435/HONDA XRE300",
+  "PDS6455": "6494/PDS6455/HONDA XRE300",
+  "PDS6475": "6495/PDS6475/HONDA XRE300",
+  "PDS6485": "6496/PDS6485/HONDA XRE300",
+  "PDS6845": "6497/PDS6845/HONDA XRE300",
+  "PEC8506": "6498/PEC8506/HONDA XRE300",
+  "PEC8526": "6499/PEC8526/HONDA XRE300",
+  "PEC8576": "64100/PEC8576/HONDA XRE300",
+  "PEC9726": "64103/PEC9726/HONDA XRE300",
+  "PEC9736": "64104/PEC9736/HONDA XRE300",
+  "PDS1785": "64105/PDS1785/HONDA XRE300",
+  "PDS1795": "64106/PDS1795/HONDA XRE300",
+  "SNR1I38": "640145/SNR1I38/HONDA XRE300",
+  "SNR8D25": "640146/SNR8D25/HONDA XRE300",
+  "SNR8A05": "640147/SNR8A05/HONDA XRE300",
+  "SNT5I45": "640148/SNT5I45/HONDA XRE300",
+  "SNT5I46": "640149/SNT5I46/HONDA XRE300",
+  "SOJ6C78": "640158/SOJ6C78/HONDA XRE300",
+};
 
-const PLACAS = [
-  "PGB5G37", "RZZ8G50", "RZZ6G90", "RZZ0F43", "RZZ0F83", "RZZ6E00", "RZZ8H00", "RZY4G58", 
-  "RZZ2E03", "SNO0C99", "SNR1I38", "SNR8D25", "SNR8A05", "SNT5I45", "SNU9F56", "SNZ8F51", 
-  "SNZ4C21", "SNZ4C61", "SOG4H29", "SOG4I59", "SOG4G99", "SOH6A98", "RZY1G98", "SOJ9C78", 
-  "SOJ6D28", "SOJ6D78", "UHL2H45", "RZZ6D80", "RZX4C63", "SNN5E90", "SOB5F10", "SOA9C08"
-].sort();
+const VIATURAS = Object.values(VIATURA_MAP).sort();
+
+const PLACAS = Object.keys(VIATURA_MAP).sort();
 
 const EQUIPAMENTOS = [
   "Giroflex", "Sirene", "Rádio Transceptor", "Chave de Roda", "Macaco", 
@@ -766,7 +796,7 @@ Gerado via ViaturaCheck 14º BPM.`;
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('Check List - 14º BPM', pageWidth / 2, 15, { align: 'center' });
+      doc.text('CHECKLIST - 14º BPM', pageWidth / 2, 15, { align: 'center' });
       
       doc.setFontSize(10);
       doc.text('Batalhão Cel PM Manoel de Souza Ferraz', pageWidth / 2, 22, { align: 'center' });
@@ -909,7 +939,7 @@ Gerado via ViaturaCheck 14º BPM.`;
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(
-          `Página ${i} de ${pageCount} - Check List - 14º BPM - Documento Oficial PMPE`,
+          `Página ${i} de ${pageCount} - CHECKLIST - 14º BPM - Documento Oficial PMPE`,
           pageWidth / 2,
           doc.internal.pageSize.getHeight() - 10,
           { align: 'center' }
@@ -940,7 +970,7 @@ Gerado via ViaturaCheck 14º BPM.`;
               />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Check List - 14º BPM</h1>
+              <h1 className="text-xl font-bold tracking-tight">CHECKLIST - 14º BPM</h1>
               <p className="text-[10px] md:text-xs font-medium opacity-90 uppercase tracking-wide">
                 Batalhão Cel PM Manoel de Souza Ferraz
               </p>
@@ -1035,7 +1065,11 @@ Gerado via ViaturaCheck 14º BPM.`;
                 <select 
                   className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
                   value={formData.placa}
-                  onChange={(e) => setFormData({...formData, placa: e.target.value})}
+                  onChange={(e) => {
+                    const placa = e.target.value;
+                    const viatura = VIATURA_MAP[placa] || formData.viatura;
+                    setFormData({...formData, placa, viatura});
+                  }}
                   required
                 >
                   <option value="">Selecione a placa</option>
