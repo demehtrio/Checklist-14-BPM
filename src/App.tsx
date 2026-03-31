@@ -1230,11 +1230,11 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase opacity-50">KM Inicial *</label>
+              <div className="space-y-2 p-4 bg-pmpe-blue/5 rounded-2xl border-2 border-pmpe-blue/20">
+                <label className="text-xs font-bold uppercase text-pmpe-blue">KM Inicial *</label>
                 <input 
                   type="number"
-                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
+                  className="w-full p-3 bg-white border border-pmpe-blue/10 rounded-xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none"
                   value={formData.kmInicial}
                   onChange={(e) => setFormData({...formData, kmInicial: e.target.value})}
                   required
@@ -1585,11 +1585,11 @@ Gerado via ViaturaCheck 14º BPM.`;
                       <h4 className="font-bold text-pmpe-blue uppercase text-[10px] tracking-widest">Dados de Encerramento (Final do Serviço)</h4>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase opacity-50">KM Final</label>
+                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
+                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">KM Final</label>
                         <input 
                           type="number"
-                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
+                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
                           value={formData.kmFinal}
                           onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
                           placeholder="KM ao desarmar"
