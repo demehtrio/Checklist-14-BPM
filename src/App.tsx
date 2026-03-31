@@ -670,11 +670,6 @@ export default function App() {
 
     // Clean up prefixo (take only the code before the dash if it exists)
     const prefixoFormatado = formData.prefixo.split(' - ')[0];
-    
-    // Extract matricula from condutorEntra (usually Grad / Nome / Mat)
-    const matMatch = formData.condutorEntra.match(/(\d+[-\d]*)$/);
-    const matricula = matMatch ? matMatch[1] : '';
-    const condutorNome = formData.condutorEntra.split('/')[1]?.trim() || formData.condutorEntra.split('/')[0]?.trim() || formData.condutorEntra;
 
     const message = `🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
@@ -687,8 +682,7 @@ export default function App() {
 ⌚ Hora que armou: ${formData.horaArmou}
 🔐 Km final: ${formData.kmFinal}
 ⌚ Hora que desarmou: ${formData.horaDesarmou}
-👮🏻‍♂️ Condutor: ${condutorNome}
-⚠️ Mat: ${matricula}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
+👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
