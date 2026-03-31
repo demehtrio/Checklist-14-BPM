@@ -26,7 +26,8 @@ import {
   Calendar,
   ShieldCheck,
   Search,
-  ChevronDown
+  ChevronDown,
+  Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -535,12 +536,29 @@ export default function App() {
       if (formData.id) {
         await updateDoc(doc(db, 'checklists', formData.id), dataToSave);
       } else {
-        await addDoc(collection(db, 'checklists'), dataToSave);
+        const docRef = await addDoc(collection(db, 'checklists'), dataToSave);
+        setFormData(prev => ({ ...prev, id: docRef.id }));
       }
       setIsSubmitted(true);
       setShowSuccess(true);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'checklists');
+    }
+  };
+
+  const handleUpdateClosure = async () => {
+    if (!user || !formData.id) return;
+    setIsGeneratingPDF(true); // Reusing this state for loading
+    try {
+      await updateDoc(doc(db, 'checklists', formData.id), {
+        kmFinal: formData.kmFinal,
+        horaDesarmou: formData.horaDesarmou
+      });
+      alert('Dados de encerramento salvos com sucesso!');
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'checklists');
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -1598,7 +1616,16 @@ Gerado via ViaturaCheck 14º BPM.`;
                         </div>
                       </div>
                     </div>
-                    <p className="text-[9px] text-pmpe-blue/60 italic text-center">Preencha estes campos para que o PDF e o WhatsApp sejam gerados com os dados de encerramento.</p>
+                    <button
+                      type="button"
+                      onClick={handleUpdateClosure}
+                      disabled={isGeneratingPDF}
+                      className="w-full bg-pmpe-gold text-pmpe-blue p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-gold/90 transition-all shadow-md flex items-center justify-center gap-2"
+                    >
+                      {isGeneratingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      Salvar Encerramento
+                    </button>
+                    <p className="text-[9px] text-pmpe-blue/60 italic text-center">Preencha e salve estes campos para que o PDF e o WhatsApp sejam gerados com os dados de encerramento.</p>
                   </div>
                 </div>
 
