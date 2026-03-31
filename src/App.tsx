@@ -705,9 +705,6 @@ export default function App() {
 
     const placaFinal = formData.placa || placaFromVtr;
     const prefixoFormatado = formData.prefixo.split(' - ')[0];
-    const matMatch = formData.condutorEntra.match(/(\d+[-\d]*)$/);
-    const matricula = matMatch ? matMatch[1] : '';
-    const condutorNome = formData.condutorEntra.split('/')[1]?.trim() || formData.condutorEntra.split('/')[0]?.trim() || formData.condutorEntra;
 
     const message = `✅ *CHECK-IN VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
@@ -719,8 +716,7 @@ export default function App() {
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
 ⌚ Hora que armou: ${formData.horaArmou}
-👮🏻‍♂️ Condutor: ${condutorNome}
-⚠️ Mat: ${matricula}`;
+👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -737,9 +733,6 @@ export default function App() {
 
     const placaFinal = formData.placa || placaFromVtr;
     const prefixoFormatado = formData.prefixo.split(' - ')[0];
-    const matMatch = formData.condutorEntra.match(/(\d+[-\d]*)$/);
-    const matricula = matMatch ? matMatch[1] : '';
-    const condutorNome = formData.condutorEntra.split('/')[1]?.trim() || formData.condutorEntra.split('/')[0]?.trim() || formData.condutorEntra;
 
     const message = `🏁 *CHECK-OUT VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
@@ -751,8 +744,7 @@ export default function App() {
 🔐 Km final: ${formData.kmFinal}
 📅 Data: ${formData.dataArmou}
 ⌚ Hora que desarmou: ${formData.horaDesarmou}
-👮🏻‍♂️ Condutor: ${condutorNome}
-⚠️ Mat: ${matricula}`;
+👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
