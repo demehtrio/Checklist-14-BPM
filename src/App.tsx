@@ -277,14 +277,16 @@ const SearchableSelect = ({
   onChange, 
   options, 
   placeholder = "Selecione...", 
-  required = false 
+  required = false,
+  rightElement = null
 }: { 
   label: string, 
   value: string, 
   onChange: (val: string) => void, 
   options: string[],
   placeholder?: string,
-  required?: boolean
+  required?: boolean,
+  rightElement?: React.ReactNode
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -306,7 +308,10 @@ const SearchableSelect = ({
 
   return (
     <div className="space-y-2 relative" ref={containerRef}>
-      <label className="text-xs font-bold uppercase opacity-50">{label} {required && '*'}</label>
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-bold uppercase opacity-50">{label} {required && '*'}</label>
+        {rightElement}
+      </div>
       <div className="relative">
         <input 
           type="text"
@@ -314,12 +319,14 @@ const SearchableSelect = ({
           placeholder={placeholder}
           value={isOpen ? searchTerm : value}
           onChange={(e) => {
-            setSearchTerm(e.target.value);
+            const val = e.target.value;
+            setSearchTerm(val);
+            onChange(val); // Allow custom values
             if (!isOpen) setIsOpen(true);
           }}
           onFocus={() => {
             setIsOpen(true);
-            setSearchTerm("");
+            setSearchTerm(value);
           }}
         />
         <div 
@@ -1039,26 +1046,26 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase opacity-50">Serviço *</label>
-                <select 
-                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                  value={formData.servico}
-                  onChange={(e) => setFormData({...formData, servico: e.target.value})}
-                  required
-                >
-                  <option value="">Selecione o serviço</option>
-                  <option value="GUARNIÇÃO">GUARNIÇÃO</option>
-                  <option value="PJES">PJES</option>
-                  <option value="MISSÃO ADM">MISSÃO ADM</option>
-                  <option value="VIAGEM">VIAGEM</option>
-                  <option value="OPERAÇÃO">OPERAÇÃO</option>
-                </select>
-              </div>
+              <SearchableSelect 
+                label="Serviço"
+                value={formData.servico}
+                onChange={(val) => setFormData({...formData, servico: val})}
+                options={["GUARNIÇÃO", "PJES", "MISSÃO ADM", "VIAGEM", "OPERAÇÃO"]}
+                placeholder="Selecione o serviço"
+                required
+              />
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase opacity-50">Placa *</label>
+              <SearchableSelect 
+                label="Placa"
+                value={formData.placa}
+                onChange={(val) => {
+                  const viatura = VIATURA_MAP[val] || formData.viatura;
+                  setFormData({...formData, placa: val, viatura});
+                }}
+                options={PLACAS}
+                placeholder="Selecione a placa"
+                required
+                rightElement={
                   <label className="cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase text-pmpe-blue hover:text-pmpe-red transition-colors">
                     {isExtractingPlate ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -1075,55 +1082,30 @@ Gerado via ViaturaCheck 14º BPM.`;
                       disabled={isExtractingPlate}
                     />
                   </label>
-                </div>
-                <select 
-                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                  value={formData.placa}
-                  onChange={(e) => {
-                    const placa = e.target.value;
-                    const viatura = VIATURA_MAP[placa] || formData.viatura;
-                    setFormData({...formData, placa, viatura});
-                  }}
-                  required
-                >
-                  <option value="">Selecione a placa</option>
-                  {PLACAS.map(p => <option key={p} value={p}>{p}</option>)}
-                  {formData.placa && !PLACAS.includes(formData.placa) && (
-                    <option value={formData.placa}>{formData.placa}</option>
-                  )}
-                </select>
-              </div>
+                }
+              />
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase opacity-50">Viatura *</label>
-                <select 
-                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                  value={formData.viatura}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    // Find the plate for this viatura
-                    const plate = Object.keys(VIATURA_MAP).find(k => VIATURA_MAP[k] === val);
-                    setFormData({...formData, viatura: val, placa: plate || formData.placa});
-                  }}
-                  required
-                >
-                  <option value="">Selecione a viatura</option>
-                  {VIATURAS.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-              </div>
+              <SearchableSelect 
+                label="Viatura"
+                value={formData.viatura}
+                onChange={(val) => {
+                  // Find the plate for this viatura
+                  const plate = Object.keys(VIATURA_MAP).find(k => VIATURA_MAP[k] === val);
+                  setFormData({...formData, viatura: val, placa: plate || formData.placa});
+                }}
+                options={VIATURAS}
+                placeholder="Selecione a viatura"
+                required
+              />
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase opacity-50">Prefixo *</label>
-                <select 
-                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
-                  value={formData.prefixo}
-                  onChange={(e) => setFormData({...formData, prefixo: e.target.value})}
-                  required
-                >
-                  <option value="">Selecione o prefixo</option>
-                  {PREFIXOS.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
+              <SearchableSelect 
+                label="Prefixo"
+                value={formData.prefixo}
+                onChange={(val) => setFormData({...formData, prefixo: val})}
+                options={PREFIXOS}
+                placeholder="Selecione o prefixo"
+                required
+              />
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase opacity-50">Data *</label>
