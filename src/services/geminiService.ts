@@ -49,7 +49,7 @@ export const checklistSchema = {
     telCondutorSai: { type: Type.STRING, description: "Telefone do condutor que sai" },
     condutorEntra: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que entra" },
     telCondutorEntra: { type: Type.STRING, description: "Telefone do condutor que entra" },
-    viatura: { type: Type.STRING, description: "Identificação da viatura (ex: 6491/Doblô Fiat)" },
+    viatura: { type: Type.STRING, description: "Identificação da viatura (Patrimônio/Modelo, ex: 640150/CHEVROLET S-10)" },
     placa: { type: Type.STRING, description: "Placa da viatura (ex: ABC-1234)" },
     prefixo: { type: Type.STRING, description: "Prefixo operacional (ex: GT 14111)" },
     kmInicial: { type: Type.STRING, description: "Quilometragem inicial" },
