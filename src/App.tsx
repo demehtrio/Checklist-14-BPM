@@ -478,20 +478,34 @@ export default function App() {
 
     setIsExtractingPlate(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64String = reader.result as string;
-        const plate = await extractLicensePlateFromImage(base64String);
-        if (plate && plate !== 'NONE') {
-          // Check if plate exists in PLACAS, if not add it or just set it
-          setFormData(prev => ({ ...prev, placa: plate.toUpperCase() }));
-          // Also add the photo to the checklist
-          setFormData(prev => ({ ...prev, fotos: [...prev.fotos, base64String] }));
-        } else {
-          alert('Não foi possível identificar a placa na imagem.');
+      const base64String = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const plate = await extractLicensePlateFromImage(base64String);
+      if (plate && plate !== 'NONE') {
+        // Normalize plate: uppercase and remove non-alphanumeric characters
+        const normalizedPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        
+        // Find the viatura for this plate
+        const viatura = VIATURA_MAP[normalizedPlate];
+        
+        setFormData(prev => ({ 
+          ...prev, 
+          placa: normalizedPlate,
+          viatura: viatura || prev.viatura,
+          fotos: [...prev.fotos, base64String]
+        }));
+        
+        if (!viatura) {
+          alert(`Placa identificada: ${normalizedPlate}. Viatura não encontrada na base de dados.`);
         }
-      };
-      reader.readAsDataURL(file);
+      } else {
+        alert('Não foi possível identificar a placa na imagem.');
+      }
     } catch (error) {
       console.error(error);
       alert('Erro ao processar a imagem.');

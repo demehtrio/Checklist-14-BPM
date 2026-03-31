@@ -119,15 +119,17 @@ export async function parseChecklistDescription(description: string): Promise<Pa
 export async function extractLicensePlateFromImage(base64Image: string): Promise<string | null> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
   
-  // Remove data:image/png;base64, prefix if present
-  const base64Data = base64Image.split(',')[1] || base64Image;
+  // Extract mimeType and data from base64 string
+  const matches = base64Image.match(/^data:([^;]+);base64,(.+)$/);
+  const mimeType = matches ? matches[1] : "image/jpeg";
+  const base64Data = matches ? matches[2] : base64Image;
   
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: {
       parts: [
         { text: "Extract the vehicle license plate from this image. Return ONLY the plate text (e.g., ABC-1234 or ABC1D23). If no plate is visible, return 'NONE'." },
-        { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
+        { inlineData: { data: base64Data, mimeType: mimeType } }
       ]
     }
   });
