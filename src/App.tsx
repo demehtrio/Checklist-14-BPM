@@ -308,15 +308,15 @@ const SearchableSelect = ({
   );
 
   return (
-    <div className="space-y-2 relative" ref={containerRef}>
+    <div className={`space-y-2 relative ${required ? 'p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/20' : ''}`} ref={containerRef}>
       <div className="flex items-center justify-between">
-        <label className="text-xs font-bold uppercase opacity-50">{label} {required && '*'}</label>
+        <label className={`text-xs font-bold uppercase ${required ? 'text-pmpe-blue' : 'opacity-50'}`}>{label} {required && '*'}</label>
         {rightElement}
       </div>
       <div className="relative">
         <input 
           type="text"
-          className="w-full p-3 pr-10 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pmpe-blue/20 transition-all font-medium text-pmpe-blue placeholder:text-gray-400"
+          className={`w-full p-3 pr-10 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pmpe-blue/20 transition-all font-medium text-pmpe-blue placeholder:text-gray-400 ${required ? 'bg-white border-pmpe-blue/10' : 'bg-[#F9F9F7] border-black/10'}`}
           placeholder={placeholder}
           value={isOpen ? searchTerm : value}
           onChange={(e) => {
@@ -1125,11 +1125,11 @@ Gerado via ViaturaCheck 14º BPM.`;
                 required
               />
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase opacity-50">Data *</label>
+              <div className="space-y-2 p-4 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/20">
+                <label className="text-xs font-bold uppercase text-pmpe-blue">Data *</label>
                 <input 
                   type="text"
-                  className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
+                  className="w-full p-3 bg-white border border-pmpe-blue/10 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none"
                   value={formData.dataArmou}
                   onChange={(e) => setFormData({...formData, dataArmou: e.target.value})}
                   placeholder="DD/MM/AAAA"
@@ -1137,12 +1137,12 @@ Gerado via ViaturaCheck 14º BPM.`;
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase opacity-50">Hora que Armou *</label>
+              <div className="space-y-2 p-4 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/20">
+                <label className="text-xs font-bold uppercase text-pmpe-blue">Hora que Armou *</label>
                 <div className="relative">
                   <input 
                     type="text"
-                    className="w-full p-3 pr-12 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
+                    className="w-full p-3 pr-12 bg-white border border-pmpe-blue/10 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none"
                     value={formData.horaArmou}
                     onChange={(e) => setFormData({...formData, horaArmou: e.target.value})}
                     placeholder="HH:MM"
@@ -1207,11 +1207,11 @@ Gerado via ViaturaCheck 14º BPM.`;
                   placeholder="Selecione o policial"
                   required
                 />
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase opacity-50">Telefone CONDUTOR que Entra *</label>
+                <div className="space-y-2 p-4 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/20">
+                  <label className="text-xs font-bold uppercase text-pmpe-blue">Telefone CONDUTOR que Entra *</label>
                   <input 
                     type="tel"
-                    className="w-full p-3 bg-[#F9F9F7] border border-black/10 rounded-xl text-sm"
+                    className="w-full p-3 bg-white border border-pmpe-blue/10 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none"
                     placeholder="(81) 9..."
                     value={formData.telCondutorEntra}
                     onChange={(e) => setFormData({...formData, telCondutorEntra: e.target.value})}
