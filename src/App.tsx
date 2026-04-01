@@ -570,6 +570,22 @@ export default function App() {
     e.preventDefault();
     if (!user) return;
 
+    // Validation for KM Final if it's provided
+    if (formData.kmFinal) {
+      const kmIni = parseFloat(formData.kmInicial);
+      const kmFin = parseFloat(formData.kmFinal);
+      
+      if (isNaN(kmFin)) {
+        alert('O KM Final deve ser um número válido.');
+        return;
+      }
+      
+      if (!isNaN(kmIni) && kmFin < kmIni) {
+        alert('O KM Final não pode ser menor que o KM Inicial.');
+        return;
+      }
+    }
+
     const dataToSave = {
       ...formData,
       userId: user.uid,
@@ -592,6 +608,26 @@ export default function App() {
 
   const handleUpdateClosure = async () => {
     if (!user || !formData.id) return;
+
+    // Validation for KM Final
+    if (!formData.kmFinal) {
+      alert('Por favor, informe o KM Final para realizar o encerramento.');
+      return;
+    }
+
+    const kmIni = parseFloat(formData.kmInicial);
+    const kmFin = parseFloat(formData.kmFinal);
+
+    if (isNaN(kmFin)) {
+      alert('O KM Final deve ser um número válido.');
+      return;
+    }
+
+    if (!isNaN(kmIni) && kmFin < kmIni) {
+      alert('O KM Final não pode ser menor que o KM Inicial.');
+      return;
+    }
+
     setIsGeneratingPDF(true); // Reusing this state for loading
     try {
       await updateDoc(doc(db, 'checklists', formData.id), {
