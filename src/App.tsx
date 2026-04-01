@@ -617,6 +617,7 @@ export default function App() {
   };
 
   const resetForm = () => {
+    if (!window.confirm('Tem certeza que deseja limpar todo o formulário? Todos os dados preenchidos serão perdidos.')) return;
     setFormData({
       ...INITIAL_STATE,
       dataArmou: new Date().toLocaleDateString('pt-BR'),
@@ -1060,9 +1061,20 @@ Gerado via ViaturaCheck 14º BPM.`;
           <>
             {/* AI Assistant Section */}
             <section className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-pmpe-red" />
-            <h2 className="font-semibold text-lg text-pmpe-blue">Assistente de Preenchimento</h2>
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-pmpe-red" />
+              <h2 className="font-semibold text-lg text-pmpe-blue">Assistente de Preenchimento</h2>
+            </div>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="flex items-center gap-1 text-[10px] font-bold uppercase text-pmpe-red/60 hover:text-pmpe-red transition-colors"
+              title="Limpar todo o formulário"
+            >
+              <Trash2 className="w-3 h-3" />
+              Limpar Tudo
+            </button>
           </div>
           <p className="text-sm text-gray-500 mb-4 italic">
             Descreva o estado da viatura em linguagem natural e eu preencho o formulário para você.
