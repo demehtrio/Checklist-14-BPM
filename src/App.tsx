@@ -354,7 +354,7 @@ const SearchableSelect = ({
           }}
           onFocus={() => {
             setIsOpen(true);
-            setSearchTerm(value);
+            setSearchTerm(""); // Clear search to show all options on focus
           }}
         />
         <div 
@@ -698,7 +698,7 @@ export default function App() {
   };
 
   const shareWhatsApp = () => {
-    const parts = formData.viatura.split('/');
+    const parts = (formData.viatura || '').split('/');
     let patrimonio = '';
     let placaFromVtr = '';
     let modelo = '';
@@ -708,13 +708,13 @@ export default function App() {
     } else if (parts.length === 2) {
       [patrimonio, modelo] = parts;
     } else {
-      patrimonio = parts[0];
+      patrimonio = parts[0] || '';
     }
 
     const placaFinal = formData.placa || placaFromVtr;
 
     // Clean up prefixo (take only the code before the dash if it exists)
-    const prefixoFormatado = formData.prefixo.split(' - ')[0];
+    const prefixoFormatado = (formData.prefixo || '').split(' - ')[0] || '';
 
     const message = `🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
@@ -734,8 +734,8 @@ export default function App() {
   };
 
   const shareCheckInWhatsApp = () => {
-    const parts = formData.viatura.split('/');
-    let patrimonio = parts[0];
+    const parts = (formData.viatura || '').split('/');
+    let patrimonio = parts[0] || '';
     let placaFromVtr = '';
     let modelo = '';
 
@@ -743,7 +743,7 @@ export default function App() {
     else if (parts.length === 2) [patrimonio, modelo] = parts;
 
     const placaFinal = formData.placa || placaFromVtr;
-    const prefixoFormatado = formData.prefixo.split(' - ')[0];
+    const prefixoFormatado = (formData.prefixo || '').split(' - ')[0] || '';
 
     const message = `✅ *CHECK-IN VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
@@ -762,8 +762,8 @@ export default function App() {
   };
 
   const shareCheckOutWhatsApp = () => {
-    const parts = formData.viatura.split('/');
-    let patrimonio = parts[0];
+    const parts = (formData.viatura || '').split('/');
+    let patrimonio = parts[0] || '';
     let placaFromVtr = '';
     let modelo = '';
 
@@ -771,7 +771,7 @@ export default function App() {
     else if (parts.length === 2) [patrimonio, modelo] = parts;
 
     const placaFinal = formData.placa || placaFromVtr;
-    const prefixoFormatado = formData.prefixo.split(' - ')[0];
+    const prefixoFormatado = (formData.prefixo || '').split(' - ')[0] || '';
 
     const message = `🏁 *CHECK-OUT VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
@@ -1985,7 +1985,11 @@ Gerado via ViaturaCheck 14º BPM.`;
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/10">
                           <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">CONDUTOR</span>
-                          <span className="text-xs font-medium text-pmpe-blue truncate">{entry.condutorEntra.split('/')[1] || entry.condutorEntra}</span>
+                          <span className="text-xs font-medium text-pmpe-blue truncate">
+                            {entry.condutorEntra?.includes('/') 
+                              ? entry.condutorEntra.split('/')[1] 
+                              : entry.condutorEntra}
+                          </span>
                         </div>
                         <div className="p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/10">
                           <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">KM Inicial</span>
