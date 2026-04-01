@@ -392,6 +392,23 @@ export default function App() {
   } as FirebaseUser);
   const [isAuthReady, setIsAuthReady] = useState(true);
   const [activeTab, setActiveTab] = useState<'check' | 'history' | 'settings'>('check');
+  const [expandedSections, setExpandedSections] = useState({
+    identificacao: true,
+    condutores: false,
+    tecnico: false,
+    iluminacao: false,
+    mecanica: false,
+    partes: false,
+    observacoes: false,
+    fotos: false
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
   const [history, setHistory] = useState<ChecklistData[]>([]);
   const [formData, setFormData] = useState<ChecklistData>(INITIAL_STATE);
   const [aiInput, setAiInput] = useState('');
@@ -1043,13 +1060,28 @@ Gerado via ViaturaCheck 14º BPM.`;
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Section: Identificação */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
-            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-              <Car className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Identificação</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
+              onClick={() => toggleSection('identificacao')}
+            >
+              <div className="flex items-center gap-2">
+                <Car className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Identificação</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.identificacao ? 'rotate-180' : ''}`} />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <AnimatePresence initial={false}>
+              {expandedSections.identificacao && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
               <SearchableSelect 
                 label="Serviço"
                 value={formData.servico}
@@ -1145,16 +1177,34 @@ Gerado via ViaturaCheck 14º BPM.`;
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
 
           {/* Section: CONDUTORES */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
-            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-              <User className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">CONDUTORES</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
+              onClick={() => toggleSection('condutores')}
+            >
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">CONDUTORES</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.condutores ? 'rotate-180' : ''}`} />
             </div>
             
-            <div className="space-y-6">
+            <AnimatePresence initial={false}>
+              {expandedSections.condutores && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 pt-6">
               <SearchableSelect 
                 label="Função do Condutor"
                 value={formData.funcao}
@@ -1206,16 +1256,35 @@ Gerado via ViaturaCheck 14º BPM.`;
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
 
           {/* Section: Estado Técnico */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
-            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-              <Settings className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Estado Técnico</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
+              onClick={() => toggleSection('tecnico')}
+            >
+              <div className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Estado Técnico</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.tecnico ? 'rotate-180' : ''}`} />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <AnimatePresence initial={false}>
+              {expandedSections.tecnico && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 p-4 bg-pmpe-blue/5 rounded-2xl border-2 border-pmpe-blue/20">
                 <label className="text-xs font-bold uppercase text-pmpe-blue">KM Inicial *</label>
                 <input 
@@ -1286,15 +1355,35 @@ Gerado via ViaturaCheck 14º BPM.`;
               </div>
             </div>
           </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
 
           {/* Section: Iluminação */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
-            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-              <Lightbulb className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Iluminação</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
+              onClick={() => toggleSection('iluminacao')}
+            >
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Iluminação</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.iluminacao ? 'rotate-180' : ''}`} />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <AnimatePresence initial={false}>
+              {expandedSections.iluminacao && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
                 { label: 'Farol Alto', field: 'luzFarolAlto' },
                 { label: 'Farol Baixo', field: 'luzFarolBaixo' },
@@ -1339,15 +1428,35 @@ Gerado via ViaturaCheck 14º BPM.`;
               </div>
             </div>
           </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
 
           {/* Section: Mecânica e Pneus */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
-            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-              <Wrench className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Mecânica e Pneus</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
+              onClick={() => toggleSection('mecanica')}
+            >
+              <div className="flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Mecânica e Pneus</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.mecanica ? 'rotate-180' : ''}`} />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <AnimatePresence initial={false}>
+              {expandedSections.mecanica && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase opacity-50">Pneus</label>
                 <select 
@@ -1393,17 +1502,37 @@ Gerado via ViaturaCheck 14º BPM.`;
                   onChange={(e) => setFormData({...formData, proxTrocaOleoKm: e.target.value})}
                 />
               </div>
-            </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Section: Partes Internas e Externas */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
-            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-              <Sparkles className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Partes Internas e Externas</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
+              onClick={() => toggleSection('partes')}
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Partes Internas e Externas</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.partes ? 'rotate-180' : ''}`} />
             </div>
             
-            <div className="space-y-4">
+            <AnimatePresence initial={false}>
+              {expandedSections.partes && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 pt-6">
+                    <div className="space-y-4">
               <label className="text-xs font-bold uppercase opacity-50">Partes Internas</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {PARTES_INTERNAS.map(item => (
@@ -1458,15 +1587,35 @@ Gerado via ViaturaCheck 14º BPM.`;
               </div>
             )}
           </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
 
           {/* Section: Observações */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
-            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-              <AlertCircle className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Observações e Avarias</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
+              onClick={() => toggleSection('observacoes')}
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Observações e Avarias</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.observacoes ? 'rotate-180' : ''}`} />
             </div>
             
-            <div className="space-y-2">
+            <AnimatePresence initial={false}>
+              {expandedSections.observacoes && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 pt-6">
+                    <div className="space-y-2">
               <label className="text-xs font-bold uppercase opacity-50">Descrição de Alterações</label>
               <textarea 
                 className="w-full p-4 bg-[#F9F9F7] border border-black/10 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 transition-all min-h-[120px]"
@@ -1476,16 +1625,36 @@ Gerado via ViaturaCheck 14º BPM.`;
               />
             </div>
           </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
 
           {/* Section: Fotos */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10 space-y-6">
-            <div className="flex items-center gap-2 border-b border-pmpe-blue/5 pb-4">
-              <Camera className="w-5 h-5 text-pmpe-blue opacity-60" />
-              <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Fotos da Viatura</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
+              onClick={() => toggleSection('fotos')}
+            >
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Fotos da Viatura</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.fotos ? 'rotate-180' : ''}`} />
             </div>
             
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <AnimatePresence initial={false}>
+              {expandedSections.fotos && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 pt-6">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {formData.fotos.map((foto, index) => (
                   <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-black/5 bg-gray-50">
                     <img src={foto} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
@@ -1513,9 +1682,12 @@ Gerado via ViaturaCheck 14º BPM.`;
                   </label>
                 )}
               </div>
-              <p className="text-[10px] text-black/40 italic">Anexe até 8 fotos (avarias, pneus, hodômetro, etc.)</p>
             </div>
           </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
 
           {/* Submit, PDF and WhatsApp Buttons */}
           <div className="grid grid-cols-1 gap-4">
