@@ -280,7 +280,7 @@ const SearchableSelect = ({
   placeholder = "Selecione...", 
   required = false,
   rightElement = null,
-  dark = false
+  variant = 'default'
 }: { 
   label: string, 
   value: string, 
@@ -289,7 +289,7 @@ const SearchableSelect = ({
   placeholder?: string,
   required?: boolean,
   rightElement?: React.ReactNode,
-  dark?: boolean
+  variant?: 'default' | 'dark' | 'green'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -309,20 +309,41 @@ const SearchableSelect = ({
     opt.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getContainerStyles = () => {
+    if (!required) return 'space-y-2 relative';
+    if (variant === 'dark') return 'space-y-2 relative p-3 bg-white/10 rounded-2xl border border-white/20';
+    if (variant === 'green') return 'space-y-2 relative p-3 bg-[#25D366]/10 rounded-2xl border border-[#25D366]/20';
+    return 'space-y-2 relative p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/20';
+  };
+
+  const getLabelStyles = () => {
+    if (variant === 'dark') return required ? 'text-white' : 'text-white/70';
+    if (variant === 'green') return required ? 'text-[#128C7E]' : 'text-[#128C7E]/60';
+    return required ? 'text-pmpe-blue' : 'opacity-50';
+  };
+
+  const getInputStyles = () => {
+    if (variant === 'dark') return 'bg-white/10 border-white/20 text-white focus:ring-white/20 placeholder:text-white/40';
+    if (variant === 'green') return 'bg-white border-[#25D366]/20 text-[#128C7E] focus:ring-[#25D366]/20 placeholder:text-[#128C7E]/40';
+    return required ? 'bg-white border-pmpe-blue/10 text-pmpe-blue focus:ring-pmpe-blue/20' : 'bg-[#F9F9F7] border-black/10 text-pmpe-blue focus:ring-pmpe-blue/20';
+  };
+
+  const getIconStyles = () => {
+    if (variant === 'dark') return 'text-white';
+    if (variant === 'green') return 'text-[#128C7E]';
+    return 'text-pmpe-blue';
+  };
+
   return (
-    <div className={`space-y-2 relative ${required ? (dark ? 'p-3 bg-white/10 rounded-2xl border border-white/20' : 'p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/20') : ''}`} ref={containerRef}>
+    <div className={getContainerStyles()} ref={containerRef}>
       <div className="flex items-center justify-between">
-        <label className={`text-xs font-bold uppercase ${required ? (dark ? 'text-white' : 'text-pmpe-blue') : (dark ? 'text-white/70' : 'opacity-50')}`}>{label} {required && '*'}</label>
+        <label className={`text-xs font-bold uppercase ${getLabelStyles()}`}>{label} {required && '*'}</label>
         {rightElement}
       </div>
       <div className="relative">
         <input 
           type="text"
-          className={`w-full p-3 pr-10 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all font-medium placeholder:text-gray-400 ${
-            dark 
-              ? 'bg-white/10 border-white/20 text-white focus:ring-white/20 placeholder:text-white/40' 
-              : (required ? 'bg-white border-pmpe-blue/10 text-pmpe-blue focus:ring-pmpe-blue/20' : 'bg-[#F9F9F7] border-black/10 text-pmpe-blue focus:ring-pmpe-blue/20')
-          }`}
+          className={`w-full p-3 pr-10 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all font-medium ${getInputStyles()}`}
           placeholder={placeholder}
           value={isOpen ? searchTerm : value}
           onChange={(e) => {
@@ -340,7 +361,7 @@ const SearchableSelect = ({
           className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <ChevronDown className={`w-4 h-4 transition-transform ${dark ? 'text-white' : 'text-pmpe-blue'} ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 transition-transform ${getIconStyles()} ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </div>
       
@@ -1066,16 +1087,16 @@ Gerado via ViaturaCheck 14º BPM.`;
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Section: Identificação */}
-          <div className="bg-pmpe-blue rounded-3xl p-6 shadow-xl border border-white/10">
+          <div className="bg-[#25D366]/10 rounded-3xl p-6 shadow-sm border border-[#25D366]/20">
             <div 
-              className="flex items-center justify-between cursor-pointer border-b border-white/10 pb-4"
+              className="flex items-center justify-between cursor-pointer border-b border-[#25D366]/10 pb-4"
               onClick={() => toggleSection('identificacao')}
             >
               <div className="flex items-center gap-2">
-                <Car className="w-5 h-5 text-white" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-white">Identificação</h3>
+                <Car className="w-5 h-5 text-[#128C7E]" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">Identificação</h3>
               </div>
-              <ChevronDown className={`w-4 h-4 text-white transition-transform duration-300 ${expandedSections.identificacao ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-[#128C7E] transition-transform duration-300 ${expandedSections.identificacao ? 'rotate-180' : ''}`} />
             </div>
             
             <AnimatePresence initial={false}>
@@ -1095,7 +1116,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={["GUARNIÇÃO", "PJES", "MISSÃO ADM", "VIAGEM", "OPERAÇÃO"]}
                 placeholder="Selecione o serviço"
                 required
-                dark
+                variant="green"
               />
 
               <SearchableSelect 
@@ -1108,9 +1129,9 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={PLACAS}
                 placeholder="Selecione a placa"
                 required
-                dark
+                variant="green"
                 rightElement={
-                  <label className="cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase text-white hover:text-pmpe-gold transition-colors">
+                  <label className="cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase text-[#128C7E] hover:text-pmpe-red transition-colors">
                     {isExtractingPlate ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
@@ -1140,7 +1161,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={VIATURAS}
                 placeholder="Selecione a viatura"
                 required
-                dark
+                variant="green"
               />
 
               <SearchableSelect 
@@ -1150,14 +1171,14 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={PREFIXOS}
                 placeholder="Selecione o prefixo"
                 required
-                dark
+                variant="green"
               />
 
-              <div className="space-y-2 p-4 bg-white/10 rounded-2xl border border-white/20">
-                <label className="text-xs font-bold uppercase text-white">Data *</label>
+              <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                <label className="text-xs font-bold uppercase text-[#128C7E]">Data *</label>
                 <input 
                   type="text"
-                  className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-sm font-medium text-white focus:ring-2 focus:ring-white/20 outline-none placeholder:text-white/40"
+                  className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
                   value={formData.dataArmou}
                   onChange={(e) => setFormData({...formData, dataArmou: e.target.value})}
                   placeholder="DD/MM/AAAA"
@@ -1165,12 +1186,12 @@ Gerado via ViaturaCheck 14º BPM.`;
                 />
               </div>
 
-              <div className="space-y-2 p-4 bg-white/10 rounded-2xl border border-white/20">
-                <label className="text-xs font-bold uppercase text-white">Hora que Armou *</label>
+              <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                <label className="text-xs font-bold uppercase text-[#128C7E]">Hora que Armou *</label>
                 <div className="relative">
                   <input 
                     type="text"
-                    className="w-full p-3 pr-12 bg-white/10 border border-white/20 rounded-xl text-sm font-medium text-white focus:ring-2 focus:ring-white/20 outline-none placeholder:text-white/40"
+                    className="w-full p-3 pr-12 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
                     value={formData.horaArmou}
                     onChange={(e) => setFormData({...formData, horaArmou: e.target.value})}
                     placeholder="HH:MM"
@@ -1179,7 +1200,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   <button
                     type="button"
                     onClick={() => setFormData({...formData, horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#128C7E]/40 hover:text-[#128C7E] transition-colors"
                     title="Usar hora atual"
                   >
                     <Clock className="w-5 h-5" />
@@ -1193,16 +1214,16 @@ Gerado via ViaturaCheck 14º BPM.`;
     </div>
 
           {/* Section: CONDUTORES */}
-          <div className="bg-pmpe-blue rounded-3xl p-6 shadow-xl border border-white/10">
+          <div className="bg-[#25D366]/10 rounded-3xl p-6 shadow-sm border border-[#25D366]/20">
             <div 
-              className="flex items-center justify-between cursor-pointer border-b border-white/10 pb-4"
+              className="flex items-center justify-between cursor-pointer border-b border-[#25D366]/10 pb-4"
               onClick={() => toggleSection('condutores')}
             >
               <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-white" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-white">CONDUTORES</h3>
+                <User className="w-5 h-5 text-[#128C7E]" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">CONDUTORES</h3>
               </div>
-              <ChevronDown className={`w-4 h-4 text-white transition-transform duration-300 ${expandedSections.condutores ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-[#128C7E] transition-transform duration-300 ${expandedSections.condutores ? 'rotate-180' : ''}`} />
             </div>
             
             <AnimatePresence initial={false}>
@@ -1222,7 +1243,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={FUNCOES}
                 placeholder="Selecione a função"
                 required
-                dark
+                variant="green"
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1232,13 +1253,13 @@ Gerado via ViaturaCheck 14º BPM.`;
                   onChange={(val) => setFormData({...formData, condutorSai: val})}
                   options={POLICIAIS}
                   placeholder="Selecione o policial"
-                  dark
+                  variant="green"
                 />
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-white/70">Telefone CONDUTOR que Sai</label>
+                  <label className="text-xs font-bold uppercase text-[#128C7E]/70">Telefone CONDUTOR que Sai</label>
                   <input 
                     type="tel"
-                    className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40"
+                    className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40"
                     placeholder="(81) 9..."
                     value={formData.telCondutorSai}
                     onChange={(e) => setFormData({...formData, telCondutorSai: e.target.value})}
@@ -1254,13 +1275,13 @@ Gerado via ViaturaCheck 14º BPM.`;
                   options={POLICIAIS}
                   placeholder="Selecione o policial"
                   required
-                  dark
+                  variant="green"
                 />
-                <div className="space-y-2 p-4 bg-white/10 rounded-2xl border border-white/20">
-                  <label className="text-xs font-bold uppercase text-white">Telefone CONDUTOR que Entra *</label>
+                <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                  <label className="text-xs font-bold uppercase text-[#128C7E]">Telefone CONDUTOR que Entra *</label>
                   <input 
                     type="tel"
-                    className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-sm font-medium text-white focus:ring-2 focus:ring-white/20 outline-none placeholder:text-white/40"
+                    className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
                     placeholder="(81) 9..."
                     value={formData.telCondutorEntra}
                     onChange={(e) => setFormData({...formData, telCondutorEntra: e.target.value})}
@@ -1275,16 +1296,16 @@ Gerado via ViaturaCheck 14º BPM.`;
     </div>
 
           {/* Section: Estado Técnico */}
-          <div className="bg-pmpe-blue rounded-3xl p-6 shadow-xl border border-white/10">
+          <div className="bg-[#25D366]/10 rounded-3xl p-6 shadow-sm border border-[#25D366]/20">
             <div 
-              className="flex items-center justify-between cursor-pointer border-b border-white/10 pb-4"
+              className="flex items-center justify-between cursor-pointer border-b border-[#25D366]/10 pb-4"
               onClick={() => toggleSection('tecnico')}
             >
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-white" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-white">Estado Técnico</h3>
+                <Settings className="w-5 h-5 text-[#128C7E]" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">Estado Técnico</h3>
               </div>
-              <ChevronDown className={`w-4 h-4 text-white transition-transform duration-300 ${expandedSections.tecnico ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-[#128C7E] transition-transform duration-300 ${expandedSections.tecnico ? 'rotate-180' : ''}`} />
             </div>
             
             <AnimatePresence initial={false}>
@@ -1298,40 +1319,40 @@ Gerado via ViaturaCheck 14º BPM.`;
                 >
                   <div className="space-y-6 pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2 p-4 bg-white/10 rounded-2xl border border-white/20">
-                        <label className="text-xs font-bold uppercase text-white">KM Inicial *</label>
+                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                        <label className="text-xs font-bold uppercase text-[#128C7E]">KM Inicial *</label>
                         <input 
                           type="number"
-                          className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-sm font-medium text-white focus:ring-2 focus:ring-white/20 outline-none placeholder:text-white/40"
+                          className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
                           value={formData.kmInicial}
                           onChange={(e) => setFormData({...formData, kmInicial: e.target.value})}
                           required
                         />
                       </div>
-                      <div className="space-y-2 p-4 bg-white/10 rounded-2xl border border-white/20">
-                        <label className="text-xs font-bold uppercase text-white/70">Saldo Combustível R$</label>
+                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">Saldo Combustível R$</label>
                         <input 
                           type="text"
-                          className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-white/20"
+                          className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
                           value={formData.saldoCombustivel}
                           onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
                         />
                       </div>
-                      <div className="space-y-2 p-4 bg-white/10 rounded-2xl border border-white/20">
-                        <label className="text-xs font-bold uppercase text-white/70">KM Final</label>
+                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">KM Final</label>
                         <input 
                           type="number"
-                          className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-white/20"
+                          className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
                           value={formData.kmFinal}
                           onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
                         />
                       </div>
-                      <div className="space-y-2 p-4 bg-white/10 rounded-2xl border border-white/20">
-                        <label className="text-xs font-bold uppercase text-white/70">Hora que Desarmou</label>
+                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">Hora que Desarmou</label>
                         <div className="relative">
                           <input 
                             type="text"
-                            className="w-full p-3 pr-12 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-white/20"
+                            className="w-full p-3 pr-12 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
                             value={formData.horaDesarmou}
                             onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
                             placeholder="HH:MM"
@@ -1339,7 +1360,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                           <button
                             type="button"
                             onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#128C7E]/40 hover:text-[#128C7E] transition-colors"
                             title="Usar hora atual"
                           >
                             <Clock className="w-5 h-5" />
@@ -1349,7 +1370,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                     </div>
 
                     <div className="space-y-4">
-                      <label className="text-xs font-bold uppercase text-white/70">Equipamentos Presentes</label>
+                      <label className="text-xs font-bold uppercase text-[#128C7E]/70">Equipamentos Presentes</label>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {EQUIPAMENTOS.map(eq => (
                           <button
@@ -1358,8 +1379,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                             onClick={() => toggleArrayItem('equipamentos', eq)}
                             className={`p-3 rounded-xl text-xs text-left transition-all border ${
                               formData.equipamentos.includes(eq) 
-                                ? 'bg-white text-pmpe-blue border-transparent shadow-lg scale-[1.02]' 
-                                : 'bg-white/10 text-white border-white/10 hover:bg-white/20'
+                                ? 'bg-[#128C7E] text-white border-transparent shadow-lg scale-[1.02]' 
+                                : 'bg-white border-[#25D366]/20 text-[#128C7E] hover:bg-[#25D366]/5'
                             }`}
                           >
                             {eq}
