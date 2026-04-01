@@ -335,7 +335,7 @@ const SearchableSelect = ({
   };
 
   return (
-    <div className={getContainerStyles()} ref={containerRef}>
+    <div className={`${getContainerStyles()} ${isOpen ? 'z-[100]' : 'z-10'}`} ref={containerRef}>
       <div className="flex items-center justify-between">
         <label className={`text-xs font-bold uppercase ${getLabelStyles()}`}>{label} {required && '*'}</label>
         {rightElement}
@@ -1118,7 +1118,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="overflow-hidden"
+                  className={expandedSections.identificacao ? "overflow-visible" : "overflow-hidden"}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
               <SearchableSelect 
@@ -1245,7 +1245,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="overflow-hidden"
+                  className={expandedSections.condutores ? "overflow-visible" : "overflow-hidden"}
                 >
                   <div className="space-y-6 pt-6">
               <SearchableSelect 
@@ -1327,7 +1327,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="overflow-hidden"
+                  className={expandedSections.tecnico ? "overflow-visible" : "overflow-hidden"}
                 >
                   <div className="space-y-6 pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
