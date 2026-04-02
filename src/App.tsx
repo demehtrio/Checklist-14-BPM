@@ -878,7 +878,7 @@ export default function App() {
 🧮 Emprego: ${formData.servico}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔐 Km final: ${formData.kmFinal}
-📅 Data: ${formData.dataArmou}
+📅 Data: ${formData.dataDesarmou}
 ⌚ Hora que desarmou: ${formData.horaDesarmou}
 👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
 
