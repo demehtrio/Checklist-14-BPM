@@ -28,7 +28,9 @@ import {
   Search,
   ChevronDown,
   Save,
-  Fuel
+  Fuel,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -402,7 +404,27 @@ const SearchableSelect = ({
   );
 };
 
+const useOnlineStatus = () => {
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+};
+
 export default function App() {
+  const isOnline = useOnlineStatus();
   const [user, setUser] = useState<FirebaseUser | null>({
     uid: 'anonymous-user',
     displayName: 'Usuário Local',
@@ -467,12 +489,12 @@ export default function App() {
 
     const q = query(collection(db, 'checklists'), orderBy('createdAt', 'desc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id,
-        // Convert Firestore timestamp to string if needed, or handle in UI
-      } as unknown as ChecklistData));
+        isSyncing: doc.metadata.hasPendingWrites
+      } as ChecklistData));
       setHistory(docs);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'checklists');
@@ -1124,6 +1146,19 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
+              {isOnline ? (
+                <>
+                  <Wifi className="w-3 h-3 text-green-400" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-green-400">Online</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3 h-3 text-pmpe-red" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-pmpe-red">Offline</span>
+                </>
+              )}
+            </div>
             <div className="hidden md:block text-right">
               <p className="text-xs font-mono opacity-50">{new Date().toLocaleDateString()}</p>
             </div>
@@ -2122,6 +2157,12 @@ Gerado via ViaturaCheck 14º BPM.`;
                               <Clock className="w-3 h-3" />
                               {entry.horaArmou}
                             </span>
+                            {entry.isSyncing && (
+                              <span className="flex items-center gap-1 text-pmpe-gold animate-pulse">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Sincronizando...
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

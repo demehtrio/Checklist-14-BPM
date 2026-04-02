@@ -37,6 +37,7 @@ export interface ChecklistData {
   dataDesarmou: string;
   horaDesarmou: string;
   fotos: string[];
+  isSyncing?: boolean;
 }
 
 export const checklistSchema = {
