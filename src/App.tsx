@@ -423,6 +423,7 @@ export default function App() {
     identificacao: true,
     condutores: false,
     tecnico: false,
+    equipamentos: false,
     iluminacao: false,
     mecanica: false,
     partes: false,
@@ -1450,9 +1451,37 @@ Gerado via ViaturaCheck 14º BPM.`;
                         </div>
                       </div>
                     </div>
+                  </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
 
+          {/* Section: Equipamentos */}
+          <div className="bg-pmpe-blue/5 rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
+            <div 
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/10 pb-4"
+              onClick={() => toggleSection('equipamentos')}
+            >
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-pmpe-blue" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Equipamentos</h3>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.equipamentos ? 'rotate-180' : ''}`} />
+            </div>
+            
+            <AnimatePresence initial={false}>
+              {expandedSections.equipamentos && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className={expandedSections.equipamentos ? "overflow-visible" : "overflow-hidden"}
+                >
+                  <div className="space-y-6 pt-6">
                     <div className="space-y-4">
-                      <label className="text-xs font-bold uppercase text-[#128C7E]/70">Equipamentos Presentes</label>
+                      <label className="text-xs font-bold uppercase text-pmpe-blue/70">Equipamentos Presentes</label>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {EQUIPAMENTOS.map(eq => (
                           <button
@@ -1461,8 +1490,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                             onClick={() => toggleArrayItem('equipamentos', eq)}
                             className={`p-3 rounded-xl text-xs text-left transition-all border ${
                               formData.equipamentos.includes(eq) 
-                                ? 'bg-[#128C7E] text-white border-transparent shadow-lg scale-[1.02]' 
-                                : 'bg-white border-[#25D366]/20 text-[#128C7E] hover:bg-[#25D366]/5'
+                                ? 'bg-pmpe-blue text-white border-transparent shadow-lg scale-[1.02]' 
+                                : 'bg-white border-pmpe-blue/20 text-pmpe-blue hover:bg-pmpe-blue/5'
                             }`}
                           >
                             {eq}
@@ -1471,10 +1500,10 @@ Gerado via ViaturaCheck 14º BPM.`;
                       </div>
                     </div>
                   </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Section: Iluminação */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
@@ -1850,6 +1879,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <SummaryItem label="Hora Armou" value={formData.horaArmou} />
                     <SummaryItem label="CONDUTOR Sai" value={formData.condutorSai} />
                     <SummaryItem label="CONDUTOR Entra" value={formData.condutorEntra} />
+                    <SummaryItem label="Equipamentos" value={formData.equipamentos} />
                   </div>
 
                   {/* Editable Fields (Finalization) */}
