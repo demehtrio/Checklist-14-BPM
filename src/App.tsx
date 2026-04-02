@@ -138,6 +138,7 @@ const INITIAL_STATE: ChecklistData = {
   limpeza: 'LIMPA',
   descricaoAlteracoes: '',
   kmFinal: '',
+  dataDesarmou: new Date().toLocaleDateString('pt-BR'),
   horaDesarmou: '',
   fotos: [],
 };
@@ -668,7 +669,9 @@ export default function App() {
     try {
       await updateDoc(doc(db, 'checklists', formData.id), {
         kmFinal: formData.kmFinal,
-        horaDesarmou: formData.horaDesarmou
+        dataDesarmou: formData.dataDesarmou,
+        horaDesarmou: formData.horaDesarmou,
+        saldoCombustivel: formData.saldoCombustivel
       });
       showNotification('Dados de encerramento salvos com sucesso!', 'success');
     } catch (error) {
@@ -999,9 +1002,10 @@ Gerado via ViaturaCheck 14º BPM.`;
       // Quilometragem e Abastecimento
       addSection('Quilometragem e Abastecimento', [
         ['KM Inicial', formData.kmInicial],
-        ['Saldo Combustível', formData.saldoCombustivel],
         ['KM Final', formData.kmFinal || 'Não informado'],
+        ['Data que Desarmou', formData.dataDesarmou],
         ['Hora que Desarmou', formData.horaDesarmou],
+        ['Saldo Combustível', formData.saldoCombustivel],
         ['Limpeza', formData.limpeza],
         ['Equipamentos', formData.equipamentos.join(', ') || 'Nenhum'],
       ]);
@@ -1414,15 +1418,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                         />
                       </div>
                       <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">Saldo Combustível R$</label>
-                        <input 
-                          type="text"
-                          className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
-                          value={formData.saldoCombustivel}
-                          onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
                         <label className="text-xs font-bold uppercase text-[#128C7E]/70">KM Final</label>
                         <input 
                           type="number"
@@ -1430,6 +1425,29 @@ Gerado via ViaturaCheck 14º BPM.`;
                           value={formData.kmFinal}
                           onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
                         />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">Data que Desarmou</label>
+                        <div className="relative">
+                          <input 
+                            type="text"
+                            className="w-full p-3 pr-12 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
+                            value={formData.dataDesarmou}
+                            onChange={(e) => setFormData({...formData, dataDesarmou: e.target.value})}
+                            placeholder="DD/MM/AAAA"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData({...formData, dataDesarmou: new Date().toLocaleDateString('pt-BR')})}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#128C7E]/40 hover:text-[#128C7E] transition-colors"
+                            title="Usar data atual"
+                          >
+                            <Calendar className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
                         <label className="text-xs font-bold uppercase text-[#128C7E]/70">Hora que Desarmou</label>
@@ -1451,6 +1469,16 @@ Gerado via ViaturaCheck 14º BPM.`;
                           </button>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
+                      <label className="text-xs font-bold uppercase text-[#128C7E]/70">Saldo Combustível R$</label>
+                      <input 
+                        type="text"
+                        className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
+                        value={formData.saldoCombustivel}
+                        onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
+                      />
                     </div>
                   </div>
         </motion.div>
@@ -1900,12 +1928,44 @@ Gerado via ViaturaCheck 14º BPM.`;
                           placeholder="KM ao desarmar"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase opacity-50">Hora que Desarmou</label>
+                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
+                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Saldo Combustível R$</label>
+                        <input 
+                          type="text"
+                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
+                          value={formData.saldoCombustivel}
+                          onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
+                          placeholder="Saldo R$"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
+                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Data que Desarmou</label>
                         <div className="relative">
                           <input 
                             type="text"
-                            className="w-full p-4 pr-12 bg-white border border-pmpe-blue/10 rounded-2xl text-sm focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
+                            className="w-full p-4 pr-12 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
+                            value={formData.dataDesarmou}
+                            onChange={(e) => setFormData({...formData, dataDesarmou: e.target.value})}
+                            placeholder="DD/MM/AAAA"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData({...formData, dataDesarmou: new Date().toLocaleDateString('pt-BR')})}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
+                          >
+                            <Calendar className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
+                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Hora que Desarmou</label>
+                        <div className="relative">
+                          <input 
+                            type="text"
+                            className="w-full p-4 pr-12 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
                             value={formData.horaDesarmou}
                             onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
                             placeholder="HH:MM"
@@ -1914,7 +1974,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                             type="button"
                             onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
                             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                            title="Usar hora atual"
                           >
                             <Clock className="w-5 h-5" />
                           </button>
