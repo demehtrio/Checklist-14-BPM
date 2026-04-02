@@ -820,7 +820,6 @@ export default function App() {
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
 🧮 Emprego: ${formData.servico}
-👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
@@ -850,7 +849,6 @@ export default function App() {
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
 🧮 Emprego: ${formData.servico}
-👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
@@ -878,7 +876,6 @@ export default function App() {
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
 🧮 Emprego: ${formData.servico}
-👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔐 Km final: ${formData.kmFinal}
 📅 Data: ${formData.dataArmou}
