@@ -1336,7 +1336,7 @@ Gerado via ViaturaCheck 14º BPM.`;
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SearchableSelect 
-                  label="CONDUTOR que Entra (Grad / Nome / Mat) * CONDUTOR que Entra *"
+                  label="CONDUTOR que Entra (Grad / Nome / Mat) *"
                   value={formData.condutorEntra}
                   onChange={(val) => setFormData({...formData, condutorEntra: val})}
                   options={POLICIAIS}
@@ -1359,7 +1359,7 @@ Gerado via ViaturaCheck 14º BPM.`;
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SearchableSelect 
-                  label="CONDUTOR que Saiu (Grad / Nome / Mat) CONDUTOR que Saiu"
+                  label="CONDUTOR que Saiu (Grad / Nome / Mat)"
                   value={formData.condutorSai}
                   onChange={(val) => setFormData({...formData, condutorSai: val})}
                   options={POLICIAIS}
