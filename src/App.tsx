@@ -467,6 +467,9 @@ export default function App() {
   const [isParsing, setIsParsing] = useState(false);
   const [isExtractingPlate, setIsExtractingPlate] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [previewFilename, setPreviewFilename] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [notification, setNotification] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
@@ -922,7 +925,7 @@ Gerado via ViaturaCheck 14º BPM.`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
-  const generatePDF = async () => {
+  const generatePDF = async (previewOnly = false, data = formData) => {
     setIsGeneratingPDF(true);
     try {
       const doc = new jsPDF();
@@ -972,7 +975,7 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       let currentY = 50;
 
-      const addSection = (title: string, data: [string, string][]) => {
+      const addSection = (title: string, sectionData: [string, string][]) => {
         // Check if we need a new page for the section title
         if (currentY > 260) {
           doc.addPage();
@@ -988,7 +991,7 @@ Gerado via ViaturaCheck 14º BPM.`;
         autoTable(doc, {
           startY: currentY,
           head: [['Campo', 'Informação']],
-          body: data,
+          body: sectionData,
           theme: 'striped',
           headStyles: { fillColor: [0, 48, 135] },
           styles: { fontSize: 9, cellPadding: 3 },
@@ -1003,66 +1006,66 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // Identificação
       addSection('Identificação', [
-        ['Serviço', formData.servico],
-        ['Função', formData.funcao],
-        ['Placa', formData.placa],
-        ['Viatura', formData.viatura],
-        ['Prefixo', formData.prefixo],
-        ['Data', formData.dataArmou],
-        ['Hora que Armou', formData.horaArmou],
-        ['Mapa Diário', formData.mapaDiario],
+        ['Serviço', data.servico],
+        ['Função', data.funcao],
+        ['Placa', data.placa],
+        ['Viatura', data.viatura],
+        ['Prefixo', data.prefixo],
+        ['Data', data.dataArmou],
+        ['Hora que Armou', data.horaArmou],
+        ['Mapa Diário', data.mapaDiario],
       ]);
 
       // CONDUTORES
       addSection('CONDUTORES', [
-        ['CONDUTOR que Entra', formData.condutorEntra],
-        ['Tel. CONDUTOR Entra', formData.telCondutorEntra],
-        ['CONDUTOR que Saiu', formData.condutorSai],
-        ['Tel. CONDUTOR Saiu', formData.telCondutorSai],
+        ['CONDUTOR que Entra', data.condutorEntra],
+        ['Tel. CONDUTOR Entra', data.telCondutorEntra],
+        ['CONDUTOR que Saiu', data.condutorSai],
+        ['Tel. CONDUTOR Saiu', data.telCondutorSai],
       ]);
 
       // Quilometragem e Abastecimento
       addSection('Quilometragem e Abastecimento', [
-        ['KM Inicial', formData.kmInicial],
-        ['KM Final', formData.kmFinal || 'Não informado'],
-        ['Data que Desarmou', formData.dataDesarmou],
-        ['Hora que Desarmou', formData.horaDesarmou],
-        ['Saldo Combustível', formData.saldoCombustivel],
-        ['Limpeza', formData.limpeza],
-        ['Equipamentos', formData.equipamentos.join(', ') || 'Nenhum'],
+        ['KM Inicial', data.kmInicial],
+        ['KM Final', data.kmFinal || 'Não informado'],
+        ['Data que Desarmou', data.dataDesarmou],
+        ['Hora que Desarmou', data.horaDesarmou],
+        ['Saldo Combustível', data.saldoCombustivel],
+        ['Limpeza', data.limpeza],
+        ['Equipamentos', data.equipamentos.join(', ') || 'Nenhum'],
       ]);
 
       // Iluminação
       addSection('Iluminação', [
-        ['Farol Alto', formData.luzFarolAlto],
-        ['Farol Baixo', formData.luzFarolBaixo],
-        ['Lanterna/Pisca', formData.luzLanterna],
-        ['Luz de Placa', formData.luzPlaca],
-        ['Luz de Freio/Traseira', formData.luzFreioLanternaTraseira.join(', ')],
+        ['Farol Alto', data.luzFarolAlto],
+        ['Farol Baixo', data.luzFarolBaixo],
+        ['Lanterna/Pisca', data.luzLanterna],
+        ['Luz de Placa', data.luzPlaca],
+        ['Luz de Freio/Traseira', data.luzFreioLanternaTraseira.join(', ')],
       ]);
 
       // Mecânica
       addSection('Mecânica e Pneus', [
-        ['Pneus', formData.pneus],
-        ['Sistema de Freio', formData.sistemaFreio],
-        ['Óleo Motor', formData.oleoMotor],
-        ['Próx. Troca Óleo KM', formData.proxTrocaOleoKm],
-        ['Sistema de Tração', formData.sistemaTracao],
+        ['Pneus', data.pneus],
+        ['Sistema de Freio', data.sistemaFreio],
+        ['Óleo Motor', data.oleoMotor],
+        ['Próx. Troca Óleo KM', data.proxTrocaOleoKm],
+        ['Sistema de Tração', data.sistemaTracao],
       ]);
 
       // Conservação
       addSection('Conservação', [
-        ['Partes Internas', formData.partesInternas.join(', ')],
-        ['Partes Externas', formData.partesExternas.join(', ')],
+        ['Partes Internas', data.partesInternas.join(', ')],
+        ['Partes Externas', data.partesExternas.join(', ')],
       ]);
 
       // Observações
       addSection('Observações', [
-        ['Descrição de Alterações', formData.descricaoAlteracoes || 'Sem alterações registradas.'],
+        ['Descrição de Alterações', data.descricaoAlteracoes || 'Sem alterações registradas.'],
       ]);
 
       // Fotos
-      if (formData.fotos.length > 0) {
+      if (data.fotos.length > 0) {
         if (currentY > 200) {
           doc.addPage();
           currentY = 20;
@@ -1079,7 +1082,7 @@ Gerado via ViaturaCheck 14º BPM.`;
         const margin = 14;
         const spacing = 10;
 
-        formData.fotos.forEach((foto, index) => {
+        data.fotos.forEach((foto, index) => {
           if (currentY + imgHeight > 280) {
             doc.addPage();
             currentY = 20;
@@ -1094,7 +1097,7 @@ Gerado via ViaturaCheck 14º BPM.`;
             console.error("Error adding image to PDF:", err);
           }
           
-          if (index % 2 !== 0 || index === formData.fotos.length - 1) {
+          if (index % 2 !== 0 || index === data.fotos.length - 1) {
             currentY += imgHeight + spacing;
           }
         });
@@ -1114,7 +1117,15 @@ Gerado via ViaturaCheck 14º BPM.`;
         );
       }
 
-      doc.save(`Checklist_${formData.viatura.replace(/\//g, '_')}_${new Date().getTime()}.pdf`);
+      if (previewOnly) {
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        setPdfPreviewUrl(url);
+        setPreviewFilename(`Checklist_${data.viatura.replace(/\//g, '_')}_${new Date().getTime()}.pdf`);
+        setShowPdfPreview(true);
+      } else {
+        doc.save(`Checklist_${data.viatura.replace(/\//g, '_')}_${new Date().getTime()}.pdf`);
+      }
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Erro ao gerar o PDF. Por favor, tente novamente.");
@@ -2062,7 +2073,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={generatePDF}
+                        onClick={() => generatePDF(true)}
                         disabled={isGeneratingPDF}
                         className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10 disabled:opacity-50"
                       >
@@ -2166,6 +2177,13 @@ Gerado via ViaturaCheck 14º BPM.`;
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => generatePDF(true, entry)}
+                            className="p-3 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all"
+                            title="Gerar PDF"
+                          >
+                            <FileText className="w-5 h-5" />
+                          </button>
                           <button 
                             onClick={() => resumeFromHistory(entry)}
                             className="p-3 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all"
@@ -2447,7 +2465,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   Enviar via WhatsApp
                 </button>
                 <button 
-                  onClick={generatePDF}
+                  onClick={() => generatePDF(true)}
                   disabled={isGeneratingPDF}
                   className="w-full py-4 bg-white text-pmpe-blue border-2 border-pmpe-blue/20 rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-gray-50 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
@@ -2515,6 +2533,76 @@ Gerado via ViaturaCheck 14º BPM.`;
             <button onClick={() => setNotification(null)} className="ml-auto p-1 hover:bg-white/10 rounded-lg">
               <X className="w-4 h-4" />
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* PDF Preview Modal */}
+      <AnimatePresence>
+        {showPdfPreview && pdfPreviewUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-5xl h-full max-h-[90vh] rounded-[40px] overflow-hidden flex flex-col shadow-2xl"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-pmpe-blue text-white">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-6 h-6 text-pmpe-gold" />
+                  <h3 className="font-bold uppercase tracking-widest text-sm">Pré-visualização do PDF</h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPdfPreview(false);
+                    if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+                    setPdfPreviewUrl(null);
+                  }}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="flex-1 bg-gray-100 relative overflow-hidden">
+                <iframe
+                  src={`${pdfPreviewUrl}#toolbar=0`}
+                  className="w-full h-full border-none"
+                  title="PDF Preview"
+                />
+              </div>
+              
+              <div className="p-6 bg-white border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = pdfPreviewUrl;
+                    link.download = previewFilename;
+                    link.click();
+                  }}
+                  className="bg-pmpe-blue text-white p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-blue/90 transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Confirmar Download
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPdfPreview(false);
+                    if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+                    setPdfPreviewUrl(null);
+                  }}
+                  className="bg-gray-100 text-gray-600 p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Voltar para Ajustes
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
