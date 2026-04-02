@@ -24,7 +24,7 @@ import {
   LogIn,
   LogOut,
   Calendar,
-  ShieldCheck,
+  Siren,
   Search,
   ChevronDown,
   Save,
@@ -1528,7 +1528,7 @@ Gerado via ViaturaCheck 14º BPM.`;
               onClick={() => toggleSection('equipamentos')}
             >
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-pmpe-blue" />
+                <Siren className="w-5 h-5 text-pmpe-blue" />
                 <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Equipamentos</h3>
               </div>
               <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.equipamentos ? 'rotate-180' : ''}`} />
