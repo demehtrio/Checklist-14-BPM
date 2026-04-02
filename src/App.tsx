@@ -993,10 +993,10 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // CONDUTORES
       addSection('CONDUTORES', [
-        ['CONDUTOR que Sai', formData.condutorSai],
-        ['Tel. CONDUTOR Sai', formData.telCondutorSai],
         ['CONDUTOR que Entra', formData.condutorEntra],
         ['Tel. CONDUTOR Entra', formData.telCondutorEntra],
+        ['CONDUTOR que Saiu', formData.condutorSai],
+        ['Tel. CONDUTOR Saiu', formData.telCondutorSai],
       ]);
 
       // Quilometragem e Abastecimento
@@ -1336,28 +1336,7 @@ Gerado via ViaturaCheck 14º BPM.`;
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SearchableSelect 
-                  label="CONDUTOR que Sai (Grad / Nome / Mat)"
-                  value={formData.condutorSai}
-                  onChange={(val) => setFormData({...formData, condutorSai: val})}
-                  options={POLICIAIS}
-                  placeholder="Selecione o policial"
-                  variant="green"
-                />
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-[#128C7E]/70">Telefone CONDUTOR que Sai</label>
-                  <input 
-                    type="tel"
-                    className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40"
-                    placeholder="(81) 9..."
-                    value={formData.telCondutorSai}
-                    onChange={(e) => setFormData({...formData, telCondutorSai: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SearchableSelect 
-                  label="CONDUTOR que Entra (Grad / Nome / Mat)"
+                  label="CONDUTOR que Entra (Grad / Nome / Mat) * CONDUTOR que Entra *"
                   value={formData.condutorEntra}
                   onChange={(val) => setFormData({...formData, condutorEntra: val})}
                   options={POLICIAIS}
@@ -1374,6 +1353,27 @@ Gerado via ViaturaCheck 14º BPM.`;
                     value={formData.telCondutorEntra}
                     onChange={(e) => setFormData({...formData, telCondutorEntra: e.target.value})}
                     required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SearchableSelect 
+                  label="CONDUTOR que Saiu (Grad / Nome / Mat) CONDUTOR que Saiu"
+                  value={formData.condutorSai}
+                  onChange={(val) => setFormData({...formData, condutorSai: val})}
+                  options={POLICIAIS}
+                  placeholder="Selecione o policial"
+                  variant="green"
+                />
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-[#128C7E]/70">Telefone CONDUTOR que Saiu</label>
+                  <input 
+                    type="tel"
+                    className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40"
+                    placeholder="(81) 9..."
+                    value={formData.telCondutorSai}
+                    onChange={(e) => setFormData({...formData, telCondutorSai: e.target.value})}
                   />
                 </div>
               </div>
@@ -1906,8 +1906,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
                     <SummaryItem label="Hora Armou" value={formData.horaArmou} />
-                    <SummaryItem label="CONDUTOR Sai" value={formData.condutorSai} />
-                    <SummaryItem label="CONDUTOR Entra" value={formData.condutorEntra} />
+                    <SummaryItem label="CONDUTOR que Entra" value={formData.condutorEntra} />
+                    <SummaryItem label="CONDUTOR que Saiu" value={formData.condutorSai} />
                     <SummaryItem label="Equipamentos" value={formData.equipamentos} />
                   </div>
 
