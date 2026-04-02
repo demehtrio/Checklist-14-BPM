@@ -27,7 +27,8 @@ import {
   ShieldCheck,
   Search,
   ChevronDown,
-  Save
+  Save,
+  Fuel
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -1385,7 +1386,7 @@ Gerado via ViaturaCheck 14º BPM.`;
               onClick={() => toggleSection('tecnico')}
             >
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-[#128C7E]" />
+                <Fuel className="w-5 h-5 text-[#128C7E]" />
                 <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">Quilometragem e Abastecimento</h3>
               </div>
               <ChevronDown className={`w-4 h-4 text-[#128C7E] transition-transform duration-300 ${expandedSections.tecnico ? 'rotate-180' : ''}`} />
@@ -1885,7 +1886,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   {/* Editable Fields (Finalization) */}
                   <div className="bg-pmpe-gold/5 p-6 rounded-[32px] border border-pmpe-gold/20 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Settings className="w-5 h-5 text-pmpe-gold" />
+                      <Fuel className="w-5 h-5 text-pmpe-gold" />
                       <h4 className="font-bold text-pmpe-blue uppercase text-[10px] tracking-widest">Dados de Encerramento (Final do Serviço)</h4>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
