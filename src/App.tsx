@@ -444,6 +444,7 @@ export default function App() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [notification, setNotification] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
   
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
@@ -566,22 +567,55 @@ export default function App() {
     }
   };
 
+  const showNotification = (message: string, type: 'error' | 'success' = 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    // Validation for Required Fields
+    if (!formData.servico) {
+      showNotification('Por favor, selecione o Tipo de Serviço.');
+      return;
+    }
+    if (!formData.funcao) {
+      showNotification('Por favor, selecione a Função.');
+      return;
+    }
+    if (!formData.viatura) {
+      showNotification('Por favor, selecione a Viatura.');
+      return;
+    }
+    if (!formData.placa) {
+      showNotification('Por favor, informe a Placa.');
+      return;
+    }
+    if (!formData.condutorEntra) {
+      showNotification('Por favor, selecione o Condutor que Entra.');
+      return;
+    }
+
+    // Validation for KM Inicial
+    const kmIni = parseFloat(formData.kmInicial);
+    if (isNaN(kmIni)) {
+      showNotification('O KM Inicial deve ser um número válido.');
+      return;
+    }
+
     // Validation for KM Final if it's provided
     if (formData.kmFinal) {
-      const kmIni = parseFloat(formData.kmInicial);
       const kmFin = parseFloat(formData.kmFinal);
       
       if (isNaN(kmFin)) {
-        alert('O KM Final deve ser um número válido.');
+        showNotification('O KM Final deve ser um número válido.');
         return;
       }
       
-      if (!isNaN(kmIni) && kmFin < kmIni) {
-        alert('O KM Final não pode ser menor que o KM Inicial.');
+      if (kmFin < kmIni) {
+        showNotification('O KM Final não pode ser menor que o KM Inicial.');
         return;
       }
     }
@@ -611,7 +645,7 @@ export default function App() {
 
     // Validation for KM Final
     if (!formData.kmFinal) {
-      alert('Por favor, informe o KM Final para realizar o encerramento.');
+      showNotification('Por favor, informe o KM Final para realizar o encerramento.');
       return;
     }
 
@@ -619,12 +653,12 @@ export default function App() {
     const kmFin = parseFloat(formData.kmFinal);
 
     if (isNaN(kmFin)) {
-      alert('O KM Final deve ser um número válido.');
+      showNotification('O KM Final deve ser um número válido.');
       return;
     }
 
     if (!isNaN(kmIni) && kmFin < kmIni) {
-      alert('O KM Final não pode ser menor que o KM Inicial.');
+      showNotification('O KM Final não pode ser menor que o KM Inicial.');
       return;
     }
 
@@ -634,7 +668,7 @@ export default function App() {
         kmFinal: formData.kmFinal,
         horaDesarmou: formData.horaDesarmou
       });
-      alert('Dados de encerramento salvos com sucesso!');
+      showNotification('Dados de encerramento salvos com sucesso!', 'success');
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'checklists');
     } finally {
@@ -2331,6 +2365,28 @@ Gerado via ViaturaCheck 14º BPM.`;
           <span className="text-[10px] font-bold uppercase">Ajustes</span>
         </button>
       </nav>
+
+      {/* Notification Toast */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className={`fixed bottom-24 left-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 min-w-[300px] border ${
+              notification.type === 'error' 
+                ? 'bg-pmpe-red text-white border-white/20' 
+                : 'bg-green-500 text-white border-white/20'
+            }`}
+          >
+            {notification.type === 'error' ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+            <span className="text-sm font-bold">{notification.message}</span>
+            <button onClick={() => setNotification(null)} className="ml-auto p-1 hover:bg-white/10 rounded-lg">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
