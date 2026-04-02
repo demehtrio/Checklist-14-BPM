@@ -995,8 +995,8 @@ Gerado via ViaturaCheck 14º BPM.`;
         ['Tel. CONDUTOR Entra', formData.telCondutorEntra],
       ]);
 
-      // Estado Técnico
-      addSection('Estado Técnico', [
+      // Quilometragem e Abastecimento
+      addSection('Quilometragem e Abastecimento', [
         ['KM Inicial', formData.kmInicial],
         ['Saldo Combustível', formData.saldoCombustivel],
         ['KM Final', formData.kmFinal || 'Não informado'],
@@ -1378,7 +1378,7 @@ Gerado via ViaturaCheck 14º BPM.`;
       </AnimatePresence>
     </div>
 
-          {/* Section: Estado Técnico */}
+          {/* Section: Quilometragem e Abastecimento */}
           <div className="bg-[#25D366]/10 rounded-3xl p-6 shadow-sm border border-[#25D366]/20">
             <div 
               className="flex items-center justify-between cursor-pointer border-b border-[#25D366]/10 pb-4"
@@ -1386,7 +1386,7 @@ Gerado via ViaturaCheck 14º BPM.`;
             >
               <div className="flex items-center gap-2">
                 <Settings className="w-5 h-5 text-[#128C7E]" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">Estado Técnico</h3>
+                <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">Quilometragem e Abastecimento</h3>
               </div>
               <ChevronDown className={`w-4 h-4 text-[#128C7E] transition-transform duration-300 ${expandedSections.tecnico ? 'rotate-180' : ''}`} />
             </div>
