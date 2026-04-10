@@ -850,7 +850,6 @@ export default function App() {
 📟 Prefixo: ${prefixoFormatado.trim()}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km: ${formData.kmInicial}
-📅 Data: ${formData.dataDesarmou}
 👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
 
     const encodedMessage = encodeURIComponent(message);
@@ -989,7 +988,6 @@ Gerado via ViaturaCheck 14º BPM.`;
       // Estado Técnico
       addSection('Estado Técnico', [
         ['KM*', data.kmInicial],
-        ['Data que Desarmou', data.dataDesarmou],
         ['Saldo Combustível', data.saldoCombustivel],
         ['Limpeza', data.limpeza],
         ['Equipamentos', data.equipamentos.join(', ') || 'Nenhum'],
@@ -1391,29 +1389,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                           onChange={(e) => setFormData({...formData, kmInicial: e.target.value})}
                           required
                         />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-pmpe-blue/70">Data que Desarmou</label>
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            className="w-full p-3 pr-12 bg-white border border-pmpe-blue/5 rounded-xl text-sm text-pmpe-blue placeholder:text-pmpe-blue/40 outline-none focus:ring-2 focus:ring-pmpe-blue/20"
-                            value={formData.dataDesarmou}
-                            onChange={(e) => setFormData({...formData, dataDesarmou: e.target.value})}
-                            placeholder="DD/MM/AAAA"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormData({...formData, dataDesarmou: new Date().toLocaleDateString('pt-BR')})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                            title="Usar data atual"
-                          >
-                            <Calendar className="w-5 h-5" />
-                          </button>
-                        </div>
                       </div>
                     </div>
 
@@ -1875,26 +1850,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
-                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Data que Desarmou</label>
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            className="w-full p-4 pr-12 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                            value={formData.dataDesarmou}
-                            onChange={(e) => setFormData({...formData, dataDesarmou: e.target.value})}
-                            placeholder="DD/MM/AAAA"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormData({...formData, dataDesarmou: new Date().toLocaleDateString('pt-BR')})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                          >
-                            <Calendar className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
                         <label className="text-[10px] font-bold uppercase text-pmpe-blue">Hora que Desarmou</label>
                         <div className="relative">
