@@ -621,31 +621,12 @@ export default function App() {
       showNotification('Por favor, informe a Placa.');
       return;
     }
-    if (!formData.condutorEntra) {
-      showNotification('Por favor, selecione o Condutor que Entra.');
-      return;
-    }
 
-    // Validation for KM Inicial
+    // Validation for KM*
     const kmIni = parseFloat(formData.kmInicial);
     if (isNaN(kmIni)) {
-      showNotification('O KM Inicial deve ser um número válido.');
+      showNotification('O KM deve ser um número válido.');
       return;
-    }
-
-    // Validation for KM Final if it's provided
-    if (formData.kmFinal) {
-      const kmFin = parseFloat(formData.kmFinal);
-      
-      if (isNaN(kmFin)) {
-        showNotification('O KM Final deve ser um número válido.');
-        return;
-      }
-      
-      if (kmFin < kmIni) {
-        showNotification('O KM Final não pode ser menor que o KM Inicial.');
-        return;
-      }
     }
 
     const dataToSave = {
@@ -693,9 +674,7 @@ export default function App() {
     setIsGeneratingPDF(true); // Reusing this state for loading
     try {
       await updateDoc(doc(db, 'checklists', formData.id), {
-        kmFinal: formData.kmFinal,
         dataDesarmou: formData.dataDesarmou,
-        horaDesarmou: formData.horaDesarmou,
         saldoCombustivel: formData.saldoCombustivel
       });
       showNotification('Dados de encerramento salvos com sucesso!', 'success');
@@ -819,14 +798,11 @@ export default function App() {
     const message = `🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
-🧮 Emprego: ${formData.servico}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-🔓 Km inic: ${formData.kmInicial}
+🔓 KM*: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
 ⌚ Hora que armou: ${formData.horaArmou}
-🔐 Km final: ${formData.kmFinal}
-⌚ Hora que desarmou: ${formData.horaDesarmou}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
+👮🏻‍♂️ Condutor/Mat: ${formData.condutorSai}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -848,12 +824,11 @@ export default function App() {
 🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
-🧮 Emprego: ${formData.servico}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-🔓 Km inic: ${formData.kmInicial}
+🔓 KM*: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
 ⌚ Hora que armou: ${formData.horaArmou}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
+👮🏻‍♂️ Condutor/Mat: ${formData.condutorSai}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -875,12 +850,9 @@ export default function App() {
 🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
 📟 Prefixo: ${prefixoFormatado.trim()}
-🧮 Emprego: ${formData.servico}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-🔐 Km final: ${formData.kmFinal}
 📅 Data: ${formData.dataDesarmou}
-⌚ Hora que desarmou: ${formData.horaDesarmou}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
+👮🏻‍♂️ Condutor/Mat: ${formData.condutorSai}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -891,22 +863,18 @@ export default function App() {
     const body = `CHECKLIST DE VIATURA - 14º BPM
 
 DADOS DO SERVIÇO:
-Serviço: ${formData.servico}
 Função: ${formData.funcao}
 Viatura: ${formData.viatura}
 Prefixo: ${formData.prefixo}
 Placa: ${formData.placa}
 Data: ${formData.dataArmou}
 Hora Armou: ${formData.horaArmou}
-Hora Desarmou: ${formData.horaDesarmou}
 
 CONDUTORES:
 Sai: ${formData.condutorSai}
-Entra: ${formData.condutorEntra}
 
 KILOMETRAGEM:
-KM Inicial: ${formData.kmInicial}
-KM Final: ${formData.kmFinal}
+KM*: ${formData.kmInicial}
 
 EQUIPAMENTOS E CONDIÇÕES:
 Equipamentos: ${formData.equipamentos.join(', ')}
@@ -1003,7 +971,6 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // Identificação
       addSection('Identificação', [
-        ['Serviço', data.servico],
         ['Função', data.funcao],
         ['Placa', data.placa],
         ['Viatura', data.viatura],
@@ -1015,18 +982,14 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // CONDUTORES
       addSection('CONDUTORES', [
-        ['CONDUTOR que Entra', data.condutorEntra],
-        ['Tel. CONDUTOR Entra', data.telCondutorEntra],
         ['CONDUTOR que Saiu', data.condutorSai],
         ['Tel. CONDUTOR Saiu', data.telCondutorSai],
       ]);
 
       // Quilometragem e Abastecimento
       addSection('Quilometragem e Abastecimento', [
-        ['KM Inicial', data.kmInicial],
-        ['KM Final', data.kmFinal || 'Não informado'],
+        ['KM*', data.kmInicial],
         ['Data que Desarmou', data.dataDesarmou],
-        ['Hora que Desarmou', data.horaDesarmou],
         ['Saldo Combustível', data.saldoCombustivel],
         ['Limpeza', data.limpeza],
         ['Equipamentos', data.equipamentos.join(', ') || 'Nenhum'],
@@ -1241,16 +1204,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
               <SearchableSelect 
-                label="Serviço"
-                value={formData.servico}
-                onChange={(val) => setFormData({...formData, servico: val})}
-                options={["GUARNIÇÃO", "PJES", "MISSÃO ADM", "VIAGEM", "OPERAÇÃO"]}
-                placeholder="Selecione o serviço"
-                required
-                variant="green"
-              />
-
-              <SearchableSelect 
                 label="Placa"
                 value={formData.placa}
                 onChange={(val) => {
@@ -1379,29 +1332,6 @@ Gerado via ViaturaCheck 14º BPM.`;
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SearchableSelect 
-                  label="CONDUTOR que Entra (Grad / Nome / Mat)"
-                  value={formData.condutorEntra}
-                  onChange={(val) => setFormData({...formData, condutorEntra: val})}
-                  options={POLICIAIS}
-                  placeholder="Selecione o policial"
-                  required
-                  variant="green"
-                />
-                <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                  <label className="text-xs font-bold uppercase text-[#128C7E]">Telefone CONDUTOR que Entra *</label>
-                  <input 
-                    type="tel"
-                    className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
-                    placeholder="(81) 9..."
-                    value={formData.telCondutorEntra}
-                    onChange={(e) => setFormData({...formData, telCondutorEntra: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SearchableSelect 
                   label="CONDUTOR que Saiu (Grad / Nome / Mat)"
                   value={formData.condutorSai}
                   onChange={(val) => setFormData({...formData, condutorSai: val})}
@@ -1451,22 +1381,13 @@ Gerado via ViaturaCheck 14º BPM.`;
                   <div className="space-y-6 pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-[#128C7E]">KM Inicial *</label>
+                        <label className="text-xs font-bold uppercase text-[#128C7E]">KM*</label>
                         <input 
                           type="number"
                           className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
                           value={formData.kmInicial}
                           onChange={(e) => setFormData({...formData, kmInicial: e.target.value})}
                           required
-                        />
-                      </div>
-                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">KM Final</label>
-                        <input 
-                          type="number"
-                          className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
-                          value={formData.kmFinal}
-                          onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
                         />
                       </div>
                     </div>
@@ -1489,26 +1410,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                             title="Usar data atual"
                           >
                             <Calendar className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">Hora que Desarmou</label>
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            className="w-full p-3 pr-12 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
-                            value={formData.horaDesarmou}
-                            onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                            placeholder="HH:MM"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#128C7E]/40 hover:text-[#128C7E] transition-colors"
-                            title="Usar hora atual"
-                          >
-                            <Clock className="w-5 h-5" />
                           </button>
                         </div>
                       </div>
@@ -1942,14 +1843,12 @@ Gerado via ViaturaCheck 14º BPM.`;
 
                   {/* Summary Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <SummaryItem label="Serviço" value={formData.servico} />
                     <SummaryItem label="Função" value={formData.funcao} />
                     <SummaryItem label="Viatura" value={formData.viatura} />
                     <SummaryItem label="Prefixo" value={formData.prefixo} />
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
                     <SummaryItem label="Hora Armou" value={formData.horaArmou} />
-                    <SummaryItem label="CONDUTOR que Entra" value={formData.condutorEntra} />
                     <SummaryItem label="CONDUTOR que Saiu" value={formData.condutorSai} />
                     <SummaryItem label="Equipamentos" value={formData.equipamentos} />
                   </div>
@@ -1960,29 +1859,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                       <Fuel className="w-5 h-5 text-pmpe-gold" />
                       <h4 className="font-bold text-pmpe-blue uppercase text-[10px] tracking-widest">Dados de Encerramento (Final do Serviço)</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
-                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">KM Final</label>
-                        <input 
-                          type="number"
-                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                          value={formData.kmFinal}
-                          onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
-                          placeholder="KM ao desarmar"
-                        />
-                      </div>
-                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
-                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Saldo Combustível R$</label>
-                        <input 
-                          type="text"
-                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                          value={formData.saldoCombustivel}
-                          onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
-                          placeholder="Saldo R$"
-                        />
-                      </div>
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
                         <label className="text-[10px] font-bold uppercase text-pmpe-blue">Data que Desarmou</label>
@@ -2004,23 +1880,14 @@ Gerado via ViaturaCheck 14º BPM.`;
                         </div>
                       </div>
                       <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
-                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Hora que Desarmou</label>
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            className="w-full p-4 pr-12 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                            value={formData.horaDesarmou}
-                            onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                            placeholder="HH:MM"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                          >
-                            <Clock className="w-5 h-5" />
-                          </button>
-                        </div>
+                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Saldo Combustível R$</label>
+                        <input 
+                          type="text"
+                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
+                          value={formData.saldoCombustivel}
+                          onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
+                          placeholder="Saldo R$"
+                        />
                       </div>
                     </div>
                     <button
@@ -2140,7 +2007,7 @@ Gerado via ViaturaCheck 14º BPM.`;
             ) : (
               <div className="space-y-4">
                 {history.map((entry, index) => {
-                  const isCompleted = entry.kmFinal && entry.horaDesarmou;
+                  const isCompleted = true; // Always completed now that KM Final is removed
                   return (
                     <motion.div 
                       key={index}
@@ -2202,26 +2069,18 @@ Gerado via ViaturaCheck 14º BPM.`;
                         <div className="p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/10">
                           <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">CONDUTOR</span>
                           <span className="text-xs font-medium text-pmpe-blue truncate">
-                            {entry.condutorEntra?.includes('/') 
-                              ? entry.condutorEntra.split('/')[1] 
-                              : entry.condutorEntra}
+                            {entry.condutorSai?.includes('/') 
+                              ? entry.condutorSai.split('/')[1] 
+                              : entry.condutorSai}
                           </span>
                         </div>
                         <div className="p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/10">
-                          <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">KM Inicial</span>
+                          <span className="text-[8px] font-bold uppercase opacity-40 text-pmpe-blue block mb-1">KM*</span>
                           <span className="text-xs font-medium text-pmpe-blue">{entry.kmInicial}</span>
                         </div>
                       </div>
 
-                      {!isCompleted && (
-                        <button 
-                          onClick={() => resumeFromHistory(entry)}
-                          className="w-full py-3 bg-pmpe-gold text-white rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-gold/90 transition-all flex items-center justify-center gap-2"
-                        >
-                          <ArrowRightLeft className="w-4 h-4" />
-                          Finalizar Check-out
-                        </button>
-                      )}
+                      {/* Finalizar Check-out button removed */}
                     </motion.div>
                   );
                 })}
@@ -2402,39 +2261,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                 <CheckCircle2 className="w-10 h-10 text-pmpe-gold" />
               </div>
               <h2 className="text-2xl font-bold text-pmpe-blue">Enviado com Sucesso!</h2>
-              <p className="text-sm text-gray-500">O checklist da viatura foi registrado no sistema PMPE.</p>
-              
-              <div className="bg-gray-50 p-4 rounded-2xl space-y-3 text-left">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase text-pmpe-blue/60">KM Final</label>
-                  <input 
-                    type="number"
-                    className="w-full p-2 bg-white border border-pmpe-blue/10 rounded-lg text-sm"
-                    value={formData.kmFinal}
-                    onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
-                    placeholder="KM Final"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase text-pmpe-blue/60">Hora que Desarmou</label>
-                  <div className="relative">
-                    <input 
-                      type="text"
-                      className="w-full p-2 pr-10 bg-white border border-pmpe-blue/10 rounded-lg text-sm"
-                      value={formData.horaDesarmou}
-                      onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                      placeholder="HH:MM"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                    >
-                      <Clock className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <p className="text-sm text-gray-500 pb-4">O checklist da viatura foi registrado no sistema PMPE.</p>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
