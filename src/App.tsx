@@ -316,25 +316,21 @@ const SearchableSelect = ({
   const getContainerStyles = () => {
     if (!required) return 'space-y-2 relative';
     if (variant === 'dark') return 'space-y-2 relative p-3 bg-white/10 rounded-2xl border border-white/20';
-    if (variant === 'green') return 'space-y-2 relative p-3 bg-[#25D366]/10 rounded-2xl border border-[#25D366]/20';
     return 'space-y-2 relative p-3 bg-pmpe-blue/5 rounded-2xl border border-pmpe-blue/20';
   };
 
   const getLabelStyles = () => {
     if (variant === 'dark') return required ? 'text-white' : 'text-white/70';
-    if (variant === 'green') return required ? 'text-[#128C7E]' : 'text-[#128C7E]/60';
     return required ? 'text-pmpe-blue' : 'opacity-50';
   };
 
   const getInputStyles = () => {
     if (variant === 'dark') return 'bg-white/10 border-white/20 text-white focus:ring-white/20 placeholder:text-white/40';
-    if (variant === 'green') return 'bg-white border-[#25D366]/20 text-[#128C7E] focus:ring-[#25D366]/20 placeholder:text-[#128C7E]/40';
     return required ? 'bg-white border-pmpe-blue/10 text-pmpe-blue focus:ring-pmpe-blue/20' : 'bg-[#F9F9F7] border-black/10 text-pmpe-blue focus:ring-pmpe-blue/20';
   };
 
   const getIconStyles = () => {
     if (variant === 'dark') return 'text-white';
-    if (variant === 'green') return 'text-[#128C7E]';
     return 'text-pmpe-blue';
   };
 
@@ -1185,16 +1181,16 @@ Gerado via ViaturaCheck 14º BPM.`;
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Section: Identificação */}
-          <div className="bg-[#25D366]/10 rounded-3xl p-6 shadow-sm border border-[#25D366]/20">
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
             <div 
-              className="flex items-center justify-between cursor-pointer border-b border-[#25D366]/10 pb-4"
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
               onClick={() => toggleSection('identificacao')}
             >
               <div className="flex items-center gap-2">
-                <Car className="w-5 h-5 text-[#128C7E]" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">Identificação</h3>
+                <Car className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Identificação</h3>
               </div>
-              <ChevronDown className={`w-4 h-4 text-[#128C7E] transition-transform duration-300 ${expandedSections.identificacao ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.identificacao ? 'rotate-180' : ''}`} />
             </div>
             
             <AnimatePresence initial={false}>
@@ -1217,9 +1213,9 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={PLACAS}
                 placeholder="Selecione a placa"
                 required
-                variant="green"
+                variant="default"
                 rightElement={
-                  <label className="cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase text-[#128C7E] hover:text-pmpe-red transition-colors">
+                  <label className="cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase text-pmpe-blue hover:text-pmpe-red transition-colors">
                     {isExtractingPlate ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
@@ -1249,7 +1245,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={VIATURAS}
                 placeholder="Selecione a viatura"
                 required
-                variant="green"
+                variant="default"
               />
 
               <SearchableSelect 
@@ -1259,14 +1255,14 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={PREFIXOS}
                 placeholder="Selecione o prefixo"
                 required
-                variant="green"
+                variant="default"
               />
 
-              <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                <label className="text-xs font-bold uppercase text-[#128C7E]">Data *</label>
+              <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                <label className="text-xs font-bold uppercase text-pmpe-blue">Data *</label>
                 <input 
                   type="text"
-                  className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
+                  className="w-full p-3 bg-white border border-pmpe-blue/5 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none placeholder:text-pmpe-blue/40"
                   value={formData.dataArmou}
                   onChange={(e) => setFormData({...formData, dataArmou: e.target.value})}
                   placeholder="DD/MM/AAAA"
@@ -1274,12 +1270,12 @@ Gerado via ViaturaCheck 14º BPM.`;
                 />
               </div>
 
-              <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                <label className="text-xs font-bold uppercase text-[#128C7E]">HORA*</label>
+              <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                <label className="text-xs font-bold uppercase text-pmpe-blue">HORA*</label>
                 <div className="relative">
                   <input 
                     type="text"
-                    className="w-full p-3 pr-12 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
+                    className="w-full p-3 pr-12 bg-white border border-pmpe-blue/5 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none placeholder:text-pmpe-blue/40"
                     value={formData.horaArmou}
                     onChange={(e) => setFormData({...formData, horaArmou: e.target.value})}
                     placeholder="HH:MM"
@@ -1288,7 +1284,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   <button
                     type="button"
                     onClick={() => setFormData({...formData, horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#128C7E]/40 hover:text-[#128C7E] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
                     title="Usar hora atual"
                   >
                     <Clock className="w-5 h-5" />
@@ -1302,16 +1298,16 @@ Gerado via ViaturaCheck 14º BPM.`;
     </div>
 
           {/* Section: CONDUTORES */}
-          <div className="bg-[#25D366]/10 rounded-3xl p-6 shadow-sm border border-[#25D366]/20">
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
             <div 
-              className="flex items-center justify-between cursor-pointer border-b border-[#25D366]/10 pb-4"
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
               onClick={() => toggleSection('condutores')}
             >
               <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-[#128C7E]" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">CONDUTORES</h3>
+                <User className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">CONDUTORES</h3>
               </div>
-              <ChevronDown className={`w-4 h-4 text-[#128C7E] transition-transform duration-300 ${expandedSections.condutores ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.condutores ? 'rotate-180' : ''}`} />
             </div>
             
             <AnimatePresence initial={false}>
@@ -1331,7 +1327,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                 options={FUNCOES}
                 placeholder="Selecione a função"
                 required
-                variant="green"
+                variant="default"
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1342,13 +1338,13 @@ Gerado via ViaturaCheck 14º BPM.`;
                   options={POLICIAIS}
                   placeholder="Selecione o policial"
                   required
-                  variant="green"
+                  variant="default"
                 />
-                <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                  <label className="text-xs font-bold uppercase text-[#128C7E]">Telefone do CONDUTOR*</label>
+                <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                  <label className="text-xs font-bold uppercase text-pmpe-blue">Telefone do CONDUTOR*</label>
                   <input 
                     type="tel"
-                    className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
+                    className="w-full p-3 bg-white border border-pmpe-blue/5 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none placeholder:text-pmpe-blue/40"
                     placeholder="(81) 9..."
                     value={formData.telCondutorEntra}
                     onChange={(e) => setFormData({...formData, telCondutorEntra: e.target.value})}
@@ -1363,16 +1359,16 @@ Gerado via ViaturaCheck 14º BPM.`;
     </div>
 
           {/* Section: Quilometragem e Abastecimento */}
-          <div className="bg-[#25D366]/10 rounded-3xl p-6 shadow-sm border border-[#25D366]/20">
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
             <div 
-              className="flex items-center justify-between cursor-pointer border-b border-[#25D366]/10 pb-4"
+              className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
               onClick={() => toggleSection('tecnico')}
             >
               <div className="flex items-center gap-2">
-                <Fuel className="w-5 h-5 text-[#128C7E]" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-[#128C7E]">Estado Técnico</h3>
+                <Fuel className="w-5 h-5 text-pmpe-blue opacity-60" />
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">Estado Técnico</h3>
               </div>
-              <ChevronDown className={`w-4 h-4 text-[#128C7E] transition-transform duration-300 ${expandedSections.tecnico ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.tecnico ? 'rotate-180' : ''}`} />
             </div>
             
             <AnimatePresence initial={false}>
@@ -1386,11 +1382,11 @@ Gerado via ViaturaCheck 14º BPM.`;
                 >
                   <div className="space-y-6 pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-[#128C7E]">KM*</label>
+                      <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                        <label className="text-xs font-bold uppercase text-pmpe-blue">KM*</label>
                         <input 
                           type="number"
-                          className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
+                          className="w-full p-3 bg-white border border-pmpe-blue/5 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none placeholder:text-pmpe-blue/40"
                           value={formData.kmInicial}
                           onChange={(e) => setFormData({...formData, kmInicial: e.target.value})}
                           required
@@ -1399,12 +1395,12 @@ Gerado via ViaturaCheck 14º BPM.`;
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">Data que Desarmou</label>
+                      <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                        <label className="text-xs font-bold uppercase text-pmpe-blue/70">Data que Desarmou</label>
                         <div className="relative">
                           <input 
                             type="text"
-                            className="w-full p-3 pr-12 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
+                            className="w-full p-3 pr-12 bg-white border border-pmpe-blue/5 rounded-xl text-sm text-pmpe-blue placeholder:text-pmpe-blue/40 outline-none focus:ring-2 focus:ring-pmpe-blue/20"
                             value={formData.dataDesarmou}
                             onChange={(e) => setFormData({...formData, dataDesarmou: e.target.value})}
                             placeholder="DD/MM/AAAA"
@@ -1412,7 +1408,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                           <button
                             type="button"
                             onClick={() => setFormData({...formData, dataDesarmou: new Date().toLocaleDateString('pt-BR')})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#128C7E]/40 hover:text-[#128C7E] transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
                             title="Usar data atual"
                           >
                             <Calendar className="w-5 h-5" />
@@ -1421,11 +1417,11 @@ Gerado via ViaturaCheck 14º BPM.`;
                       </div>
                     </div>
 
-                    <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                      <label className="text-xs font-bold uppercase text-[#128C7E]/70">Saldo Combustível R$</label>
+                    <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                      <label className="text-xs font-bold uppercase text-pmpe-blue/70">Saldo Combustível R$</label>
                       <input 
                         type="text"
-                        className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
+                        className="w-full p-3 bg-white border border-pmpe-blue/5 rounded-xl text-sm text-pmpe-blue placeholder:text-pmpe-blue/40 outline-none focus:ring-2 focus:ring-pmpe-blue/20"
                         value={formData.saldoCombustivel}
                         onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
                       />
@@ -1856,8 +1852,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
                     <SummaryItem label="Hora Armou" value={formData.horaArmou} />
-                    <SummaryItem label="CONDUTOR que Entra" value={formData.condutorEntra} />
-                    <SummaryItem label="CONDUTOR que Saiu" value={formData.condutorSai} />
+                    <SummaryItem label="CONDUTOR" value={formData.condutorEntra} />
                     <SummaryItem label="Equipamentos" value={formData.equipamentos} />
                   </div>
 
@@ -1867,17 +1862,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                       <Fuel className="w-5 h-5 text-pmpe-gold" />
                       <h4 className="font-bold text-pmpe-blue uppercase text-[10px] tracking-widest">Dados de Encerramento (Final do Serviço)</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
-                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">KM Final</label>
-                        <input 
-                          type="number"
-                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                          value={formData.kmFinal}
-                          onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
-                          placeholder="KM ao desarmar"
-                        />
-                      </div>
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
                         <label className="text-[10px] font-bold uppercase text-pmpe-blue">Saldo Combustível R$</label>
                         <input 
@@ -1953,7 +1938,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                       <button
                         type="button"
                         onClick={shareCheckInWhatsApp}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-[#25D366]/10 text-[#128C7E] rounded-2xl hover:bg-[#25D366]/20 transition-all border border-[#25D366]/20"
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
                       >
                         <LogIn className="w-6 h-6" />
                         <span className="text-[9px] font-bold uppercase">Check-in Zap</span>
@@ -1961,7 +1946,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                       <button
                         type="button"
                         onClick={shareCheckOutWhatsApp}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-[#25D366]/10 text-[#128C7E] rounded-2xl hover:bg-[#25D366]/20 transition-all border border-[#25D366]/20"
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
                       >
                         <LogOut className="w-6 h-6" />
                         <span className="text-[9px] font-bold uppercase">Check-out Zap</span>
@@ -2000,7 +1985,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   <button
                     type="button"
                     onClick={shareWhatsApp}
-                    className="w-full bg-[#25D366] text-white p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-[#128C7E] transition-all shadow-xl flex items-center justify-center gap-3"
+                    className="w-full bg-pmpe-blue text-white p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-pmpe-blue/90 transition-all shadow-xl flex items-center justify-center gap-3"
                   >
                     <MessageCircle className="w-6 h-6" />
                     WhatsApp Completo
@@ -2346,14 +2331,14 @@ Gerado via ViaturaCheck 14º BPM.`;
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={shareCheckInWhatsApp}
-                  className="flex flex-col items-center justify-center gap-1 py-3 bg-[#25D366]/10 text-[#128C7E] rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-[#25D366]/20 transition-all border border-[#25D366]/20"
+                  className="flex flex-col items-center justify-center gap-1 py-3 bg-pmpe-blue/5 text-pmpe-blue rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
                 >
                   <LogIn className="w-4 h-4" />
                   Check-in Zap
                 </button>
                 <button
                   onClick={shareCheckOutWhatsApp}
-                  className="flex flex-col items-center justify-center gap-1 py-3 bg-[#25D366]/10 text-[#128C7E] rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-[#25D366]/20 transition-all border border-[#25D366]/20"
+                  className="flex flex-col items-center justify-center gap-1 py-3 bg-pmpe-blue/5 text-pmpe-blue rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
                 >
                   <LogOut className="w-4 h-4" />
                   Check-out Zap
@@ -2363,7 +2348,7 @@ Gerado via ViaturaCheck 14º BPM.`;
               <div className="flex flex-col gap-2 pt-2">
                 <button 
                   onClick={shareWhatsApp}
-                  className="w-full py-4 bg-[#25D366] text-white rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-[#128C7E] flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-pmpe-blue text-white rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-pmpe-blue/90 flex items-center justify-center gap-2"
                 >
                   <MessageCircle className="w-4 h-4" />
                   Enviar via WhatsApp
