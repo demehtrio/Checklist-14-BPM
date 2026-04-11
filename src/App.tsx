@@ -133,7 +133,7 @@ const INITIAL_STATE: ChecklistData = {
   partesInternas: ['SEM ALTERAÇÃO'],
   sistemaTracao: 'Kit de tração em condições',
   partesExternas: ['Sem Alteração'],
-  limpeza: 'LIMPA',
+  limpeza: 'SIM',
   descricaoAlteracoes: '',
   fotos: [],
 };
@@ -1132,85 +1132,105 @@ Gerado via ViaturaCheck 14º BPM.`;
                   className={expandedSections.identificacao ? "overflow-visible" : "overflow-hidden"}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-              <SearchableSelect 
-                label="Placa"
-                value={formData.placa}
-                onChange={(val) => {
-                  const viatura = VIATURA_MAP[val] || formData.viatura;
-                  setFormData({...formData, placa: val, viatura});
-                }}
-                options={PLACAS}
-                placeholder="Selecione a placa"
-                required
-                variant="default"
-                rightElement={
-                  <label className="cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase text-pmpe-blue hover:text-pmpe-red transition-colors">
-                    {isExtractingPlate ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Camera className="w-3 h-3" />
-                    )}
-                    {isExtractingPlate ? 'Extraindo...' : 'Extrair da Foto'}
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      capture="environment"
-                      className="hidden" 
-                      onChange={handleExtractPlate}
-                      disabled={isExtractingPlate}
+                    <SearchableSelect 
+                      label="Placa"
+                      value={formData.placa}
+                      onChange={(val) => {
+                        const viatura = VIATURA_MAP[val] || formData.viatura;
+                        setFormData({...formData, placa: val, viatura});
+                      }}
+                      options={PLACAS}
+                      placeholder="Selecione a placa"
+                      required
+                      variant="default"
+                      rightElement={
+                        <label className="cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase text-pmpe-blue hover:text-pmpe-red transition-colors">
+                          {isExtractingPlate ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Camera className="w-3 h-3" />
+                          )}
+                          {isExtractingPlate ? 'Extraindo...' : 'Extrair da Foto'}
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            capture="environment"
+                            className="hidden" 
+                            onChange={handleExtractPlate}
+                            disabled={isExtractingPlate}
+                          />
+                        </label>
+                      }
                     />
-                  </label>
-                }
-              />
 
-              <SearchableSelect 
-                label="Viatura"
-                value={formData.viatura}
-                onChange={(val) => {
-                  // Find the plate for this viatura
-                  const plate = Object.keys(VIATURA_MAP).find(k => VIATURA_MAP[k] === val);
-                  setFormData({...formData, viatura: val, placa: plate || formData.placa});
-                }}
-                options={VIATURAS}
-                placeholder="Selecione a viatura"
-                required
-                variant="default"
-              />
+                    <SearchableSelect 
+                      label="Viatura"
+                      value={formData.viatura}
+                      onChange={(val) => {
+                        // Find the plate for this viatura
+                        const plate = Object.keys(VIATURA_MAP).find(k => VIATURA_MAP[k] === val);
+                        setFormData({...formData, viatura: val, placa: plate || formData.placa});
+                      }}
+                      options={VIATURAS}
+                      placeholder="Selecione a viatura"
+                      required
+                      variant="default"
+                    />
 
-              <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
-                <label className="text-xs font-bold uppercase text-pmpe-blue">Data *</label>
-                <input 
-                  type="text"
-                  className="w-full p-3 bg-white border border-pmpe-blue/5 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none placeholder:text-pmpe-blue/40"
-                  value={formData.dataArmou}
-                  onChange={(e) => setFormData({...formData, dataArmou: e.target.value})}
-                  placeholder="DD/MM/AAAA"
-                  required
-                />
-              </div>
+                    <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                      <label className="text-xs font-bold uppercase text-pmpe-blue">Data *</label>
+                      <input 
+                        type="text"
+                        className="w-full p-3 bg-white border border-pmpe-blue/5 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none placeholder:text-pmpe-blue/40"
+                        value={formData.dataArmou}
+                        onChange={(e) => setFormData({...formData, dataArmou: e.target.value})}
+                        placeholder="DD/MM/AAAA"
+                        required
+                      />
+                    </div>
 
-              <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
-                <label className="text-xs font-bold uppercase text-pmpe-blue">HORA*</label>
-                <div className="relative">
-                  <input 
-                    type="text"
-                    className="w-full p-3 pr-12 bg-white border border-pmpe-blue/5 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none placeholder:text-pmpe-blue/40"
-                    value={formData.horaArmou}
-                    onChange={(e) => setFormData({...formData, horaArmou: e.target.value})}
-                    placeholder="HH:MM"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({...formData, horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                    title="Usar hora atual"
-                  >
-                    <Clock className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
+                    <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                      <label className="text-xs font-bold uppercase text-pmpe-blue">HORA*</label>
+                      <div className="relative">
+                        <input 
+                          type="text"
+                          className="w-full p-3 pr-12 bg-white border border-pmpe-blue/5 rounded-xl text-sm font-medium text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none placeholder:text-pmpe-blue/40"
+                          value={formData.horaArmou}
+                          onChange={(e) => setFormData({...formData, horaArmou: e.target.value})}
+                          placeholder="HH:MM"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({...formData, horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
+                          title="Usar hora atual"
+                        >
+                          <Clock className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                      <label className="text-xs font-bold uppercase text-pmpe-blue">Mapa Diário? *</label>
+                      <div className="flex gap-4 pt-2">
+                        {['SIM', 'NÃO'].map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, mapaDiario: opt })}
+                            className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all border ${
+                              formData.mapaDiario === opt
+                                ? 'bg-pmpe-blue text-white border-transparent shadow-md'
+                                : 'bg-white text-pmpe-blue border-pmpe-blue/10 hover:border-pmpe-blue/30'
+                            }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1300,6 +1320,26 @@ Gerado via ViaturaCheck 14º BPM.`;
                           onChange={(e) => setFormData({...formData, kmInicial: e.target.value})}
                           required
                         />
+                      </div>
+
+                      <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
+                        <label className="text-xs font-bold uppercase text-pmpe-blue">LIMPEZA? *</label>
+                        <div className="flex gap-4 pt-2">
+                          {['SIM', 'NÃO'].map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, limpeza: opt })}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all border ${
+                                formData.limpeza === opt
+                                  ? 'bg-pmpe-blue text-white border-transparent shadow-md'
+                                  : 'bg-white text-pmpe-blue border-pmpe-blue/10 hover:border-pmpe-blue/30'
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
@@ -1735,6 +1775,8 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
                     <SummaryItem label="Hora Armou" value={formData.horaArmou} />
+                    <SummaryItem label="Mapa Diário" value={formData.mapaDiario} />
+                    <SummaryItem label="Limpeza" value={formData.limpeza} />
                     <SummaryItem label="CONDUTOR" value={formData.condutorEntra} />
                     <SummaryItem label="Equipamentos" value={formData.equipamentos} />
                   </div>

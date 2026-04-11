@@ -73,7 +73,7 @@ export const checklistSchema = {
       items: { type: Type.STRING },
       description: "Alterações em partes externas" 
     },
-    limpeza: { type: Type.STRING, description: "Estado de limpeza" },
+    limpeza: { type: Type.STRING, description: "Estado de limpeza (SIM, NÃO)" },
     descricaoAlteracoes: { type: Type.STRING, description: "Descrição detalhada de alterações ou avarias" },
     fotos: { 
       type: Type.ARRAY, 
