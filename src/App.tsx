@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Layout,
+  History,
   FileText,
   MapPin,
   MessageCircle,
@@ -110,17 +111,12 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 const INITIAL_STATE: ChecklistData = {
-  servico: '',
-  funcao: '',
   dataArmou: new Date().toLocaleDateString('pt-BR'),
   horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-  condutorSai: '',
-  telCondutorSai: '',
   condutorEntra: '',
   telCondutorEntra: '',
   viatura: '',
   placa: '',
-  prefixo: '',
   kmInicial: '',
   saldoCombustivel: '',
   mapaDiario: 'SIM',
@@ -139,23 +135,8 @@ const INITIAL_STATE: ChecklistData = {
   partesExternas: ['Sem Alteração'],
   limpeza: 'LIMPA',
   descricaoAlteracoes: '',
-  kmFinal: '',
-  dataDesarmou: new Date().toLocaleDateString('pt-BR'),
-  horaDesarmou: '',
   fotos: [],
 };
-
-const FUNCOES = [
-  "MOTORISTA",
-  "COMANDANTE",
-  "PATRULHEIRO",
-  "AUXILIAR",
-  "SENTINELA",
-  "PERMANENTE",
-  "COMANDANTE DE GUARNIÇÃO",
-  "MOTORISTA DE GUARNIÇÃO",
-  "PATRULHEIRO DE GUARNIÇÃO"
-].sort();
 
 const VIATURA_MAP: Record<string, string> = {
   "SNZ8F51": "640150/CHEVROLET S-10",
@@ -601,10 +582,6 @@ export default function App() {
     if (!user) return;
 
     // Validation for Required Fields
-    if (!formData.funcao) {
-      showNotification('Por favor, selecione a Função.');
-      return;
-    }
     if (!formData.viatura) {
       showNotification('Por favor, selecione a Viatura.');
       return;
@@ -645,44 +622,6 @@ export default function App() {
     }
   };
 
-  const handleUpdateClosure = async () => {
-    if (!user || !formData.id) return;
-
-    // Validation for KM Final
-    if (!formData.kmFinal) {
-      showNotification('Por favor, informe o KM Final para realizar o encerramento.');
-      return;
-    }
-
-    const kmIni = parseFloat(formData.kmInicial);
-    const kmFin = parseFloat(formData.kmFinal);
-
-    if (isNaN(kmFin)) {
-      showNotification('O KM Final deve ser um número válido.');
-      return;
-    }
-
-    if (!isNaN(kmIni) && kmFin < kmIni) {
-      showNotification('O KM Final não pode ser menor que o KM Inicial.');
-      return;
-    }
-
-    setIsGeneratingPDF(true); // Reusing this state for loading
-    try {
-      await updateDoc(doc(db, 'checklists', formData.id), {
-        kmFinal: formData.kmFinal,
-        dataDesarmou: formData.dataDesarmou,
-        horaDesarmou: formData.horaDesarmou,
-        saldoCombustivel: formData.saldoCombustivel
-      });
-      showNotification('Dados de encerramento salvos com sucesso!', 'success');
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'checklists');
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
   const deleteFromHistory = async (id: string) => {
     if (!user) return;
     if (!window.confirm('Tem certeza que deseja excluir este registro?')) return;
@@ -699,7 +638,6 @@ export default function App() {
       ...INITIAL_STATE,
       dataArmou: new Date().toLocaleDateString('pt-BR'),
       horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      horaDesarmou: '',
     });
     setIsSubmitted(false);
     setShowSuccess(false);
@@ -774,83 +712,64 @@ export default function App() {
     }));
   };
 
-  const shareWhatsApp = () => {
-    const parts = (formData.viatura || '').split('/');
-    let patrimonio = '';
-    let placaFromVtr = '';
-    let modelo = '';
+  const shareWhatsApp = (data = formData) => {
+    const FIELD_LABELS: Record<string, string> = {
+      dataArmou: "Data",
+      horaArmou: "Hora",
+      condutorEntra: "Condutor",
+      telCondutorEntra: "Telefone do Condutor",
+      viatura: "Viatura",
+      placa: "Placa",
+      kmInicial: "KM",
+      saldoCombustivel: "Saldo Combustível R$",
+      mapaDiario: "Mapa Diário",
+      equipamentos: "Equipamentos",
+      luzFarolAlto: "Farol Alto",
+      luzFarolBaixo: "Farol Baixo",
+      luzLanterna: "Lanterna/Pisca",
+      luzFreioLanternaTraseira: "Freio/Lanterna Traseira",
+      luzPlaca: "Luz de Placa",
+      pneus: "Pneus",
+      sistemaFreio: "Sistema de Freio",
+      oleoMotor: "Óleo Motor",
+      proxTrocaOleoKm: "Próxima Troca Óleo (KM)",
+      partesInternas: "Partes Internas",
+      sistemaTracao: "Sistema de Tração",
+      partesExternas: "Partes Externas",
+      limpeza: "Limpeza",
+      descricaoAlteracoes: "Descrição de Alterações",
+    };
 
-    if (parts.length === 3) {
-      [patrimonio, placaFromVtr, modelo] = parts;
-    } else if (parts.length === 2) {
-      [patrimonio, modelo] = parts;
-    } else {
-      patrimonio = parts[0] || '';
+    let message = `📋 *CHECKLIST VIATURA - 14º BPM*\n\n`;
+
+    // Order of fields to display
+    const fieldOrder = [
+      'dataArmou', 'horaArmou', 'viatura', 'placa',
+      'condutorEntra', 'telCondutorEntra', 'kmInicial', 'saldoCombustivel',
+      'mapaDiario', 'equipamentos', 'luzFarolAlto', 'luzFarolBaixo', 'luzLanterna',
+      'luzFreioLanternaTraseira', 'luzPlaca', 'pneus', 'sistemaFreio', 'oleoMotor',
+      'proxTrocaOleoKm', 'partesInternas', 'sistemaTracao', 'partesExternas',
+      'limpeza', 'descricaoAlteracoes'
+    ];
+
+    fieldOrder.forEach(key => {
+      const value = (data as any)[key];
+      const label = FIELD_LABELS[key];
+      
+      if (!label) return;
+
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          message += `*${label}:* ${value.join(', ')}\n`;
+        }
+      } else if (value && typeof value === 'string' && value.trim() !== '') {
+        message += `*${label}:* ${value}\n`;
+      }
+    });
+
+    if (data.fotos && data.fotos.length > 0) {
+      message += `\n📸 *Fotos:* ${data.fotos.length} anexadas`;
     }
-
-    const placaFinal = formData.placa || placaFromVtr;
-
-    // Clean up prefixo (take only the code before the dash if it exists)
-    const prefixoFormatado = (formData.prefixo || '').split(' - ')[0] || '';
-
-    const message = `🪙 Pat: ${patrimonio.trim() || ''}
-⛔ Placa: ${placaFinal.trim() || ''}
-📟 Prefixo: ${prefixoFormatado.trim()}
-🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-🔓 Km: ${formData.kmInicial}
-📅 Data: ${formData.dataArmou}
-⌚ Hora: ${formData.horaArmou}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
-
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
-  };
-
-  const shareCheckInWhatsApp = () => {
-    const parts = (formData.viatura || '').split('/');
-    let patrimonio = parts[0] || '';
-    let placaFromVtr = '';
-    let modelo = '';
-
-    if (parts.length === 3) [patrimonio, placaFromVtr, modelo] = parts;
-    else if (parts.length === 2) [patrimonio, modelo] = parts;
-
-    const placaFinal = formData.placa || placaFromVtr;
-    const prefixoFormatado = (formData.prefixo || '').split(' - ')[0] || '';
-
-    const message = `✅ *CHECK-IN VIATURA*
-🪙 Pat: ${patrimonio.trim() || ''}
-⛔ Placa: ${placaFinal.trim() || ''}
-📟 Prefixo: ${prefixoFormatado.trim()}
-🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-🔓 Km: ${formData.kmInicial}
-📅 Data: ${formData.dataArmou}
-⌚ Hora: ${formData.horaArmou}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
-
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
-  };
-
-  const shareCheckOutWhatsApp = () => {
-    const parts = (formData.viatura || '').split('/');
-    let patrimonio = parts[0] || '';
-    let placaFromVtr = '';
-    let modelo = '';
-
-    if (parts.length === 3) [patrimonio, placaFromVtr, modelo] = parts;
-    else if (parts.length === 2) [patrimonio, modelo] = parts;
-
-    const placaFinal = formData.placa || placaFromVtr;
-    const prefixoFormatado = (formData.prefixo || '').split(' - ')[0] || '';
-
-    const message = `🏁 *CHECK-OUT VIATURA*
-🪙 Pat: ${patrimonio.trim() || ''}
-⛔ Placa: ${placaFinal.trim() || ''}
-📟 Prefixo: ${prefixoFormatado.trim()}
-🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-🔓 Km: ${formData.kmInicial}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -861,9 +780,7 @@ export default function App() {
     const body = `CHECKLIST DE VIATURA - 14º BPM
 
 DADOS DO SERVIÇO:
-Função: ${formData.funcao}
 Viatura: ${formData.viatura}
-Prefixo: ${formData.prefixo}
 Placa: ${formData.placa}
 Data: ${formData.dataArmou}
 Hora: ${formData.horaArmou}
@@ -970,17 +887,15 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // Identificação
       addSection('Identificação', [
-        ['Função', data.funcao],
         ['Placa', data.placa],
         ['Viatura', data.viatura],
-        ['Prefixo', data.prefixo],
         ['Data', data.dataArmou],
         ['HORA*', data.horaArmou],
         ['Mapa Diário', data.mapaDiario],
       ]);
 
-      // CONDUTORES
-      addSection('CONDUTORES', [
+      // CONDUTOR
+      addSection('CONDUTOR', [
         ['CONDUTOR', data.condutorEntra],
         ['Telefone do CONDUTOR*', data.telCondutorEntra],
       ]);
@@ -1115,6 +1030,22 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-2 bg-white/10 p-1 rounded-2xl border border-white/20">
+              <button 
+                onClick={() => setActiveTab('check')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'check' ? 'bg-white text-pmpe-blue shadow-lg' : 'text-white hover:bg-white/10'}`}
+              >
+                Novo Checklist
+              </button>
+              <button 
+                onClick={() => setActiveTab('history')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white text-pmpe-blue shadow-lg' : 'text-white hover:bg-white/10'}`}
+              >
+                Histórico
+              </button>
+            </div>
+
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
               {isOnline ? (
                 <>
@@ -1246,16 +1177,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                 variant="default"
               />
 
-              <SearchableSelect 
-                label="Prefixo"
-                value={formData.prefixo}
-                onChange={(val) => setFormData({...formData, prefixo: val})}
-                options={PREFIXOS}
-                placeholder="Selecione o prefixo"
-                required
-                variant="default"
-              />
-
               <div className="space-y-2 p-4 bg-white border border-pmpe-blue/10 rounded-2xl">
                 <label className="text-xs font-bold uppercase text-pmpe-blue">Data *</label>
                 <input 
@@ -1295,7 +1216,7 @@ Gerado via ViaturaCheck 14º BPM.`;
       </AnimatePresence>
     </div>
 
-          {/* Section: CONDUTORES */}
+          {/* Section: CONDUTOR */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
             <div 
               className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
@@ -1303,7 +1224,7 @@ Gerado via ViaturaCheck 14º BPM.`;
             >
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5 text-pmpe-blue opacity-60" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">CONDUTORES</h3>
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">CONDUTOR</h3>
               </div>
               <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.condutores ? 'rotate-180' : ''}`} />
             </div>
@@ -1318,16 +1239,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                   className={expandedSections.condutores ? "overflow-visible" : "overflow-hidden"}
                 >
                   <div className="space-y-6 pt-6">
-              <SearchableSelect 
-                label="Função do Condutor"
-                value={formData.funcao}
-                onChange={(val) => setFormData({...formData, funcao: val})}
-                options={FUNCOES}
-                placeholder="Selecione a função"
-                required
-                variant="default"
-              />
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SearchableSelect 
                   label="CONDUTOR (Grad / Nome / Mat)"
@@ -1820,100 +1731,20 @@ Gerado via ViaturaCheck 14º BPM.`;
 
                   {/* Summary Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <SummaryItem label="Serviço" value={formData.servico} />
-                    <SummaryItem label="Função" value={formData.funcao} />
                     <SummaryItem label="Viatura" value={formData.viatura} />
-                    <SummaryItem label="Prefixo" value={formData.prefixo} />
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
                     <SummaryItem label="Hora Armou" value={formData.horaArmou} />
                     <SummaryItem label="CONDUTOR" value={formData.condutorEntra} />
                     <SummaryItem label="Equipamentos" value={formData.equipamentos} />
                   </div>
-
-                  {/* Editable Fields (Finalization) */}
-                  <div className="bg-pmpe-gold/5 p-6 rounded-[32px] border border-pmpe-gold/20 space-y-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Fuel className="w-5 h-5 text-pmpe-gold" />
-                      <h4 className="font-bold text-pmpe-blue uppercase text-[10px] tracking-widest">Dados de Encerramento (Final do Serviço)</h4>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
-                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Saldo Combustível R$</label>
-                        <input 
-                          type="text"
-                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                          value={formData.saldoCombustivel}
-                          onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
-                          placeholder="Saldo R$"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
-                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">Hora que Desarmou</label>
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            className="w-full p-4 pr-12 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                            value={formData.horaDesarmou}
-                            onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                            placeholder="HH:MM"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                          >
-                            <Clock className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleUpdateClosure}
-                      disabled={isGeneratingPDF}
-                      className="w-full bg-pmpe-gold text-pmpe-blue p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-gold/90 transition-all shadow-md flex items-center justify-center gap-2"
-                    >
-                      {isGeneratingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Salvar Encerramento
-                    </button>
-                    <p className="text-[9px] text-pmpe-blue/60 italic text-center">Preencha e salve estes campos para que o PDF e o WhatsApp sejam gerados com os dados de encerramento.</p>
-                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4">
-                    <h4 className="text-[10px] font-bold uppercase text-pmpe-blue/60 tracking-widest flex items-center gap-2">
-                      <ArrowRightLeft className="w-4 h-4" />
-                      Opções de Check-in / Check-out
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={shareCheckInWhatsApp}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
-                      >
-                        <LogIn className="w-6 h-6" />
-                        <span className="text-[9px] font-bold uppercase">Check-in Zap</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={shareCheckOutWhatsApp}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
-                      >
-                        <LogOut className="w-6 h-6" />
-                        <span className="text-[9px] font-bold uppercase">Check-out Zap</span>
-                      </button>
-                    </div>
-                  </div>
-
+                <div className="grid grid-cols-1 gap-4">
                   <div className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4">
                     <h4 className="text-[10px] font-bold uppercase text-pmpe-blue/60 tracking-widest flex items-center gap-2">
                       <FileText className="w-4 h-4" />
-                      Checklist Completo
+                      Opções de Compartilhamento
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <button
@@ -1988,7 +1819,6 @@ Gerado via ViaturaCheck 14º BPM.`;
             ) : (
               <div className="space-y-4">
                 {history.map((entry, index) => {
-                  const isCompleted = entry.kmFinal && entry.horaDesarmou;
                   return (
                     <motion.div 
                       key={index}
@@ -1997,10 +1827,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                       transition={{ delay: index * 0.05 }}
                       className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4 relative overflow-hidden"
                     >
-                      <div className={`absolute top-0 right-0 px-4 py-1 rounded-bl-2xl text-[8px] font-bold uppercase tracking-widest ${isCompleted ? 'bg-green-500 text-white' : 'bg-pmpe-gold text-white'}`}>
-                        {isCompleted ? 'Concluído' : 'Em Aberto'}
-                      </div>
-
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
                           <h3 className="text-lg font-bold text-pmpe-blue">{entry.viatura}</h3>
@@ -2022,6 +1848,13 @@ Gerado via ViaturaCheck 14º BPM.`;
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => shareWhatsApp(entry)}
+                            className="p-3 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all"
+                            title="Enviar via WhatsApp"
+                          >
+                            <MessageCircle className="w-5 h-5" />
+                          </button>
                           <button 
                             onClick={() => generatePDF(true, entry)}
                             className="p-3 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all"
@@ -2060,16 +1893,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                           <span className="text-xs font-medium text-pmpe-blue">{entry.kmInicial}</span>
                         </div>
                       </div>
-
-                      {!isCompleted && (
-                        <button 
-                          onClick={() => resumeFromHistory(entry)}
-                          className="w-full py-3 bg-pmpe-gold text-white rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-gold/90 transition-all flex items-center justify-center gap-2"
-                        >
-                          <ArrowRightLeft className="w-4 h-4" />
-                          Finalizar Check-out
-                        </button>
-                      )}
                     </motion.div>
                   );
                 })}
@@ -2245,83 +2068,39 @@ Gerado via ViaturaCheck 14º BPM.`;
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-pmpe-blue/40 backdrop-blur-sm"
           >
-            <div className="bg-white p-8 rounded-[40px] shadow-2xl text-center space-y-4 max-w-sm w-full border-t-8 border-pmpe-blue">
+            <div className="bg-white p-8 rounded-[40px] shadow-2xl text-center space-y-6 max-w-md w-full border-t-8 border-pmpe-blue">
               <div className="w-20 h-20 bg-pmpe-gold/10 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-10 h-10 text-pmpe-gold" />
               </div>
-              <h2 className="text-2xl font-bold text-pmpe-blue">Enviado com Sucesso!</h2>
-              <p className="text-sm text-gray-500">O checklist da viatura foi registrado no sistema PMPE.</p>
+              <div>
+                <h2 className="text-2xl font-bold text-pmpe-blue">Checklist Finalizado!</h2>
+                <p className="text-sm text-gray-500">Os dados foram salvos com sucesso. Agora você pode compartilhar ou gerar o PDF.</p>
+              </div>
               
-              <div className="bg-gray-50 p-4 rounded-2xl space-y-3 text-left">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase text-pmpe-blue/60">KM Final</label>
-                  <input 
-                    type="number"
-                    className="w-full p-2 bg-white border border-pmpe-blue/10 rounded-lg text-sm"
-                    value={formData.kmFinal}
-                    onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
-                    placeholder="KM Final"
-                  />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => generatePDF(true)}
+                    disabled={isGeneratingPDF}
+                    className="flex flex-col items-center justify-center gap-2 py-4 bg-white text-pmpe-blue border-2 border-pmpe-blue/10 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-gray-50 transition-all disabled:opacity-50"
+                  >
+                    {isGeneratingPDF ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5 text-pmpe-red" />}
+                    Gerar PDF
+                  </button>
+                  <button 
+                    onClick={() => shareWhatsApp()}
+                    className="flex flex-col items-center justify-center gap-2 py-4 bg-pmpe-blue text-white rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-blue/90 transition-all shadow-lg"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    WhatsApp
+                  </button>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase text-pmpe-blue/60">Hora que Desarmou</label>
-                  <div className="relative">
-                    <input 
-                      type="text"
-                      className="w-full p-2 pr-10 bg-white border border-pmpe-blue/10 rounded-lg text-sm"
-                      value={formData.horaDesarmou}
-                      onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                      placeholder="HH:MM"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                    >
-                      <Clock className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={shareCheckInWhatsApp}
-                  className="flex flex-col items-center justify-center gap-1 py-3 bg-pmpe-blue/5 text-pmpe-blue rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Check-in Zap
-                </button>
-                <button
-                  onClick={shareCheckOutWhatsApp}
-                  className="flex flex-col items-center justify-center gap-1 py-3 bg-pmpe-blue/5 text-pmpe-blue rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Check-out Zap
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-2 pt-2">
-                <button 
-                  onClick={shareWhatsApp}
-                  className="w-full py-4 bg-pmpe-blue text-white rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-pmpe-blue/90 flex items-center justify-center gap-2"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Enviar via WhatsApp
-                </button>
-                <button 
-                  onClick={() => generatePDF(true)}
-                  disabled={isGeneratingPDF}
-                  className="w-full py-4 bg-white text-pmpe-blue border-2 border-pmpe-blue/20 rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-gray-50 flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isGeneratingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4 text-pmpe-red" />}
-                  {isGeneratingPDF ? 'Gerando PDF...' : 'Baixar PDF do Checklist'}
-                </button>
+                
                 <button 
                   onClick={() => setShowSuccess(false)}
-                  className="w-full py-4 bg-pmpe-blue text-white rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-pmpe-blue/90"
+                  className="w-full py-4 bg-gray-100 text-pmpe-blue rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-all"
                 >
-                  Fechar
+                  Finalizar e Voltar
                 </button>
               </div>
             </div>
@@ -2342,7 +2121,7 @@ Gerado via ViaturaCheck 14º BPM.`;
           onClick={() => setActiveTab('history')}
           className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'history' ? 'text-pmpe-blue scale-110' : 'opacity-40 text-pmpe-blue'}`}
         >
-          <Layout className="w-6 h-6" />
+          <History className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase">Histórico</span>
         </button>
         <button 
