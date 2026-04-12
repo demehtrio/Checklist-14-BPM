@@ -31,7 +31,8 @@ import {
   Save,
   Fuel,
   Wifi,
-  WifiOff
+  WifiOff,
+  AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -107,7 +108,57 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     path
   }
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  // We don't throw here to avoid crashing the whole app, 
+  // instead we rely on the UI to show the error via notification
+  return errInfo;
+}
+
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-[40px] p-8 shadow-2xl border border-pmpe-red/10 max-w-md w-full text-center space-y-6">
+            <div className="w-20 h-20 bg-pmpe-red/5 rounded-full flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-10 h-10 text-pmpe-red" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-pmpe-blue">Ops! Algo deu errado.</h2>
+              <p className="text-gray-500 text-sm">
+                Ocorreu um erro inesperado no sistema. Por favor, tente recarregar a página.
+              </p>
+            </div>
+            {this.state.error && (
+              <div className="p-4 bg-gray-50 rounded-2xl text-left overflow-auto max-h-40">
+                <code className="text-[10px] text-pmpe-red">{this.state.error.message}</code>
+              </div>
+            )}
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full bg-pmpe-blue text-white py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-pmpe-blue/90 transition-all"
+            >
+              Recarregar Página
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 const INITIAL_STATE: ChecklistData = {
@@ -403,23 +454,8 @@ const useOnlineStatus = () => {
 
 export default function App() {
   const isOnline = useOnlineStatus();
-  const [user, setUser] = useState<FirebaseUser | null>({
-    uid: 'anonymous-user',
-    displayName: 'Usuário Local',
-    email: 'local@pmpe.gov.br',
-    emailVerified: true,
-    isAnonymous: false,
-    metadata: {},
-    providerData: [],
-    refreshToken: '',
-    tenantId: null,
-    delete: async () => {},
-    getIdToken: async () => '',
-    getIdTokenResult: async () => ({} as any),
-    reload: async () => {},
-    toJSON: () => ({})
-  } as FirebaseUser);
-  const [isAuthReady, setIsAuthReady] = useState(true);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [activeTab, setActiveTab] = useState<'check' | 'history' | 'settings'>('check');
   const [expandedSections, setExpandedSections] = useState({
     identificacao: true,
@@ -459,10 +495,17 @@ export default function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
 
-  // Auth Listener (Bypass for local restore)
+  // Auth Listener
   useEffect(() => {
-    // Simulating auth ready
-    setIsAuthReady(true);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsAuthReady(true);
+      
+      if (currentUser) {
+        setIsAdmin(currentUser.email === "demetriomarques@gmail.com");
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   // Firestore History Sync
@@ -648,8 +691,10 @@ export default function App() {
       }
       setIsSubmitted(true);
       setShowSuccess(true);
+      showNotification('Checklist salvo com sucesso!', 'success');
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'checklists');
+      showNotification('Erro ao salvar checklist. Verifique sua conexão.');
     } finally {
       setIsLoading(false);
     }
@@ -1077,8 +1122,26 @@ Gerado via ViaturaCheck 14º BPM.`;
   };
 
   return (
-    <div className="min-h-screen bg-pmpe-bg text-[#141414] font-sans pb-20">
-      {/* Header */}
+    <ErrorBoundary>
+      <div className="min-h-screen bg-pmpe-bg text-[#141414] font-sans pb-20">
+        {/* Loading Overlay */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200] bg-pmpe-blue/20 backdrop-blur-sm flex items-center justify-center"
+            >
+              <div className="bg-white p-8 rounded-[40px] shadow-2xl flex flex-col items-center gap-4">
+                <Loader2 className="w-12 h-12 text-pmpe-blue animate-spin" />
+                <p className="text-sm font-bold uppercase tracking-widest text-pmpe-blue">Processando...</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Header */}
       <header className="bg-pmpe-blue text-white p-6 sticky top-0 z-50 shadow-lg border-b-4 border-pmpe-red">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -2359,6 +2422,7 @@ Gerado via ViaturaCheck 14º BPM.`;
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
