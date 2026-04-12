@@ -717,11 +717,11 @@ export default function App() {
       dataArmou: "Data",
       horaArmou: "Hora",
       condutorEntra: "Condutor",
-      telCondutorEntra: "Telefone do Condutor",
+      telCondutorEntra: "Telefone",
       viatura: "Viatura",
       placa: "Placa",
       kmInicial: "KM",
-      saldoCombustivel: "Saldo Combustível R$",
+      saldoCombustivel: "Saldo Combustível",
       mapaDiario: "Mapa Diário",
       equipamentos: "Equipamentos",
       luzFarolAlto: "Farol Alto",
@@ -732,44 +732,76 @@ export default function App() {
       pneus: "Pneus",
       sistemaFreio: "Sistema de Freio",
       oleoMotor: "Óleo Motor",
-      proxTrocaOleoKm: "Próxima Troca Óleo (KM)",
+      proxTrocaOleoKm: "Próx. Troca Óleo (KM)",
       partesInternas: "Partes Internas",
       sistemaTracao: "Sistema de Tração",
       partesExternas: "Partes Externas",
       limpeza: "Limpeza",
-      descricaoAlteracoes: "Descrição de Alterações",
+      descricaoAlteracoes: "Observações",
     };
 
-    let message = `📋 *CHECKLIST VIATURA - 14º BPM*\n\n`;
+    let message = `📋 *CHECKLIST VIATURA - 14º BPM*\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-    // Order of fields to display
-    const fieldOrder = [
-      'dataArmou', 'horaArmou', 'viatura', 'placa',
-      'condutorEntra', 'telCondutorEntra', 'kmInicial', 'saldoCombustivel',
-      'mapaDiario', 'equipamentos', 'luzFarolAlto', 'luzFarolBaixo', 'luzLanterna',
-      'luzFreioLanternaTraseira', 'luzPlaca', 'pneus', 'sistemaFreio', 'oleoMotor',
-      'proxTrocaOleoKm', 'partesInternas', 'sistemaTracao', 'partesExternas',
-      'limpeza', 'descricaoAlteracoes'
+    const sections = [
+      {
+        title: "📍 IDENTIFICAÇÃO",
+        fields: ['dataArmou', 'horaArmou', 'viatura', 'placa', 'mapaDiario']
+      },
+      {
+        title: "👤 CONDUTOR",
+        fields: ['condutorEntra', 'telCondutorEntra']
+      },
+      {
+        title: "⚙️ ESTADO TÉCNICO",
+        fields: ['kmInicial', 'saldoCombustivel', 'limpeza']
+      },
+      {
+        title: "🛠️ EQUIPAMENTOS",
+        fields: ['equipamentos']
+      },
+      {
+        title: "💡 ILUMINAÇÃO",
+        fields: ['luzFarolAlto', 'luzFarolBaixo', 'luzLanterna', 'luzPlaca', 'luzFreioLanternaTraseira']
+      },
+      {
+        title: "🔧 MECÂNICA E PNEUS",
+        fields: ['pneus', 'sistemaFreio', 'oleoMotor', 'proxTrocaOleoKm', 'sistemaTracao']
+      },
+      {
+        title: "🛡️ CONSERVAÇÃO",
+        fields: ['partesInternas', 'partesExternas']
+      },
+      {
+        title: "📝 OBSERVAÇÕES",
+        fields: ['descricaoAlteracoes']
+      }
     ];
 
-    fieldOrder.forEach(key => {
-      const value = (data as any)[key];
-      const label = FIELD_LABELS[key];
-      
-      if (!label) return;
+    sections.forEach(section => {
+      message += `*${section.title}*\n`;
+      section.fields.forEach(key => {
+        const value = (data as any)[key];
+        const label = FIELD_LABELS[key];
+        if (!label) return;
 
-      if (Array.isArray(value)) {
-        if (value.length > 0) {
-          message += `*${label}:* ${value.join(', ')}\n`;
+        let displayValue = "";
+        if (Array.isArray(value)) {
+          displayValue = value.length > 0 ? value.join(', ') : "Nenhum";
+        } else {
+          displayValue = (value !== undefined && value !== null && String(value).trim() !== '') ? String(value) : "Não informado";
         }
-      } else if (value && typeof value === 'string' && value.trim() !== '') {
-        message += `*${label}:* ${value}\n`;
-      }
+        message += `• *${label}:* ${displayValue}\n`;
+      });
+      message += `\n`;
     });
 
     if (data.fotos && data.fotos.length > 0) {
-      message += `\n📸 *Fotos:* ${data.fotos.length} anexadas`;
+      message += `📸 *Fotos:* ${data.fotos.length} anexadas\n`;
     }
+
+    message += `━━━━━━━━━━━━━━━━━━━━\n`;
+    message += `_Gerado via ViaturaCheck 14º BPM_`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
