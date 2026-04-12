@@ -113,54 +113,6 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   return errInfo;
 }
 
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-[40px] p-8 shadow-2xl border border-pmpe-red/10 max-w-md w-full text-center space-y-6">
-            <div className="w-20 h-20 bg-pmpe-red/5 rounded-full flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-10 h-10 text-pmpe-red" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-pmpe-blue">Ops! Algo deu errado.</h2>
-              <p className="text-gray-500 text-sm">
-                Ocorreu um erro inesperado no sistema. Por favor, tente recarregar a página.
-              </p>
-            </div>
-            {this.state.error && (
-              <div className="p-4 bg-gray-50 rounded-2xl text-left overflow-auto max-h-40">
-                <code className="text-[10px] text-pmpe-red">{this.state.error.message}</code>
-              </div>
-            )}
-            <button 
-              onClick={() => window.location.reload()}
-              className="w-full bg-pmpe-blue text-white py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-pmpe-blue/90 transition-all"
-            >
-              Recarregar Página
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
 const INITIAL_STATE: ChecklistData = {
   dataArmou: new Date().toLocaleDateString('pt-BR'),
   horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -552,14 +504,75 @@ export default function App() {
 
   // Save draft to localStorage
   useEffect(() => {
-    localStorage.setItem('viatura_current_form', JSON.stringify(formData));
-    localStorage.setItem('viatura_is_submitted', String(isSubmitted));
-    localStorage.setItem('viatura_show_success', String(showSuccess));
-    localStorage.setItem('viatura_active_tab', activeTab);
+    try {
+      localStorage.setItem('viatura_current_form', JSON.stringify(formData));
+      localStorage.setItem('viatura_is_submitted', String(isSubmitted));
+      localStorage.setItem('viatura_show_success', String(showSuccess));
+      localStorage.setItem('viatura_active_tab', activeTab);
+    } catch (e) {
+      console.warn('Failed to save to localStorage (likely quota exceeded)', e);
+    }
   }, [formData, isSubmitted, showSuccess, activeTab]);
 
-  const videoRef = React.useRef<HTMLVideoElement>(null);
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const compressImage = (base64Str: string, maxWidth = 800, maxHeight = 800): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    setIsLoading(true);
+    try {
+      const newFotos: string[] = [];
+      const fileList = Array.from(files) as File[];
+      for (const file of fileList) {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        const compressed = await compressImage(base64);
+        newFotos.push(compressed);
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        fotos: [...prev.fotos, ...newFotos].slice(0, 8)
+      }));
+    } catch (error) {
+      console.error('Error processing images:', error);
+      showNotification('Erro ao processar imagens.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAiParse = async () => {
     if (!aiInput.trim()) return;
@@ -588,7 +601,8 @@ export default function App() {
         reader.readAsDataURL(file);
       });
 
-      const plate = await extractLicensePlateFromImage(base64String);
+      const compressed = await compressImage(base64String);
+      const plate = await extractLicensePlateFromImage(compressed);
       if (plate && plate !== 'NONE') {
         // Normalize plate: uppercase and remove non-alphanumeric characters
         const normalizedPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -600,7 +614,7 @@ export default function App() {
           ...prev, 
           placa: normalizedPlate,
           viatura: viatura || prev.viatura,
-          fotos: [...prev.fotos, base64String]
+          fotos: [...prev.fotos, compressed].slice(0, 8)
         }));
         
         if (!viatura) {
@@ -763,23 +777,6 @@ export default function App() {
         return { ...prev, [field]: current.filter(i => i !== item) };
       }
       return { ...prev, [field]: [...current, item] };
-    });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    Array.from(files).forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setFormData(prev => ({
-          ...prev,
-          fotos: [...prev.fotos, base64String]
-        }));
-      };
-      reader.readAsDataURL(file);
     });
   };
 
@@ -1122,8 +1119,7 @@ Gerado via ViaturaCheck 14º BPM.`;
   };
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-pmpe-bg text-[#141414] font-sans pb-20">
+    <div className="min-h-screen bg-pmpe-bg text-[#141414] font-sans pb-20">
         {/* Loading Overlay */}
         <AnimatePresence>
           {isLoading && (
@@ -2423,6 +2419,5 @@ Gerado via ViaturaCheck 14º BPM.`;
         )}
       </AnimatePresence>
       </div>
-    </ErrorBoundary>
   );
 }
