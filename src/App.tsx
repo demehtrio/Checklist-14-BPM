@@ -503,19 +503,27 @@ export default function App() {
     if (savedTab === 'settings') setActiveTab('settings');
   }, []);
 
-  // Save draft to localStorage
+  // Save draft to localStorage (Debounced to avoid lag with photos)
   useEffect(() => {
-    try {
-      localStorage.setItem('viatura_current_form', JSON.stringify(formData));
-      localStorage.setItem('viatura_is_submitted', String(isSubmitted));
-      localStorage.setItem('viatura_show_success', String(showSuccess));
-      localStorage.setItem('viatura_active_tab', activeTab);
-    } catch (e) {
-      console.warn('Failed to save to localStorage (likely quota exceeded)', e);
-    }
+    const timeoutId = setTimeout(() => {
+      try {
+        // Only save to localStorage if the data isn't too large
+        const serialized = JSON.stringify(formData);
+        if (serialized.length < 2000000) { // 2MB limit for localStorage
+          localStorage.setItem('viatura_current_form', serialized);
+        }
+        localStorage.setItem('viatura_is_submitted', String(isSubmitted));
+        localStorage.setItem('viatura_show_success', String(showSuccess));
+        localStorage.setItem('viatura_active_tab', activeTab);
+      } catch (e) {
+        console.warn('Failed to save to localStorage', e);
+      }
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timeoutId);
   }, [formData, isSubmitted, showSuccess, activeTab]);
 
-  const compressImage = (base64Str: string, maxWidth = 600, maxHeight = 600): Promise<string> => {
+  const compressImage = (base64Str: string, maxWidth = 500, maxHeight = 500): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onerror = () => reject(new Error('Failed to load image for compression'));
@@ -545,8 +553,8 @@ export default function App() {
             return;
           }
           ctx.drawImage(img, 0, 0, width, height);
-          // Use lower quality to ensure we stay under Firestore's 1MB limit
-          resolve(canvas.toDataURL('image/jpeg', 0.5));
+          // Quality 0.4 is usually enough for identification and keeps size very low
+          resolve(canvas.toDataURL('image/jpeg', 0.4));
         } catch (e) {
           reject(e);
         }
@@ -657,8 +665,15 @@ export default function App() {
         return;
       }
 
+      // Set a shorter timeout for the initial high-accuracy request
+      const timeoutId = setTimeout(() => {
+        console.warn("Location request timed out");
+        resolve(undefined);
+      }, 6000);
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          clearTimeout(timeoutId);
           resolve({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -666,10 +681,11 @@ export default function App() {
           });
         },
         (error) => {
+          clearTimeout(timeoutId);
           console.warn("Error getting location:", error.message);
           resolve(undefined);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     });
   };
