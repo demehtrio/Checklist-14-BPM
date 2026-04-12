@@ -136,6 +136,7 @@ const INITIAL_STATE: ChecklistData = {
   limpeza: 'SIM',
   descricaoAlteracoes: '',
   fotos: [],
+  location: undefined,
 };
 
 const VIATURA_MAP: Record<string, string> = {
@@ -444,6 +445,7 @@ export default function App() {
   const [isParsing, setIsParsing] = useState(false);
   const [isExtractingPlate, setIsExtractingPlate] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [previewFilename, setPreviewFilename] = useState<string>('');
@@ -577,6 +579,31 @@ export default function App() {
     setTimeout(() => setNotification(null), 5000);
   };
 
+  const getCurrentLocation = (): Promise<{ latitude: number, longitude: number, accuracy: number } | undefined> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation is not supported by this browser.");
+        resolve(undefined);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          });
+        },
+        (error) => {
+          console.warn("Error getting location:", error.message);
+          resolve(undefined);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -602,8 +629,12 @@ export default function App() {
       return;
     }
 
+    setIsLoading(true);
+    const location = await getCurrentLocation();
+
     const dataToSave = {
       ...formData,
+      location,
       userId: user.uid,
       createdAt: formData.createdAt || serverTimestamp(),
     };
@@ -613,12 +644,14 @@ export default function App() {
         await updateDoc(doc(db, 'checklists', formData.id), dataToSave);
       } else {
         const docRef = await addDoc(collection(db, 'checklists'), dataToSave);
-        setFormData(prev => ({ ...prev, id: docRef.id }));
+        setFormData(prev => ({ ...prev, id: docRef.id, location }));
       }
       setIsSubmitted(true);
       setShowSuccess(true);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'checklists');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -798,6 +831,10 @@ export default function App() {
 
     if (data.fotos && data.fotos.length > 0) {
       message += `📸 *Fotos:* ${data.fotos.length} anexadas\n`;
+    }
+
+    if (data.location) {
+      message += `📍 *Localização:* https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}\n`;
     }
 
     message += `━━━━━━━━━━━━━━━━━━━━\n`;
@@ -1811,6 +1848,12 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <SummaryItem label="Limpeza" value={formData.limpeza} />
                     <SummaryItem label="CONDUTOR" value={formData.condutorEntra} />
                     <SummaryItem label="Equipamentos" value={formData.equipamentos} />
+                    {formData.location && (
+                      <SummaryItem 
+                        label="Localização" 
+                        value={`${formData.location.latitude.toFixed(4)}, ${formData.location.longitude.toFixed(4)}`} 
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1913,6 +1956,18 @@ Gerado via ViaturaCheck 14º BPM.`;
                               <Clock className="w-3 h-3" />
                               {entry.horaArmou}
                             </span>
+                            {entry.location && (
+                              <a 
+                                href={`https://www.google.com/maps?q=${entry.location.latitude},${entry.location.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-pmpe-blue hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MapPin className="w-3 h-3" />
+                                Ver Local
+                              </a>
+                            )}
                             {entry.isSyncing && (
                               <span className="flex items-center gap-1 text-pmpe-gold animate-pulse">
                                 <Loader2 className="w-3 h-3 animate-spin" />

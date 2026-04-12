@@ -32,6 +32,14 @@
         "limpeza": { "type": "string" },
         "descricaoAlteracoes": { "type": "string" },
         "fotos": { "type": "array", "items": { "type": "string" } },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" },
+            "accuracy": { "type": "number" }
+          }
+        },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "viatura", "condutorEntra", "kmInicial"]

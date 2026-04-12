@@ -3,6 +3,7 @@
   "description": "Digital vehicle checklist for the 14º BPM (Batalhão Cel PM Manoel de Souza Ferraz) with AI-powered parsing of inspection reports.",
   "requestFramePermissions": [
     "camera",
-    "microphone"
+    "microphone",
+    "geolocation"
   ]
 }

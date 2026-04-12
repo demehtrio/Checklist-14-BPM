@@ -29,6 +29,11 @@ export interface ChecklistData {
   limpeza: string;
   descricaoAlteracoes: string;
   fotos: string[];
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  };
   isSyncing?: boolean;
 }
 
