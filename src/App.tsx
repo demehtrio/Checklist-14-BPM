@@ -434,6 +434,7 @@ export default function App() {
   const [isExtractingPlate, setIsExtractingPlate] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Processando...');
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [previewFilename, setPreviewFilename] = useState<string>('');
@@ -514,33 +515,43 @@ export default function App() {
     }
   }, [formData, isSubmitted, showSuccess, activeTab]);
 
-  const compressImage = (base64Str: string, maxWidth = 800, maxHeight = 800): Promise<string> => {
-    return new Promise((resolve) => {
+  const compressImage = (base64Str: string, maxWidth = 600, maxHeight = 600): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const img = new Image();
-      img.src = base64Str;
+      img.onerror = () => reject(new Error('Failed to load image for compression'));
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
 
-        if (width > height) {
-          if (width > maxWidth) {
-            height *= maxWidth / width;
-            width = maxWidth;
+          if (width > height) {
+            if (width > maxWidth) {
+              height *= maxWidth / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width *= maxHeight / height;
+              height = maxHeight;
+            }
           }
-        } else {
-          if (height > maxHeight) {
-            width *= maxHeight / height;
-            height = maxHeight;
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
           }
+          ctx.drawImage(img, 0, 0, width, height);
+          // Use lower quality to ensure we stay under Firestore's 1MB limit
+          resolve(canvas.toDataURL('image/jpeg', 0.5));
+        } catch (e) {
+          reject(e);
         }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
       };
+      img.src = base64Str;
     });
   };
 
@@ -548,14 +559,16 @@ export default function App() {
     const files = e.target.files;
     if (!files) return;
 
+    setLoadingMessage('Processando imagens...');
     setIsLoading(true);
     try {
       const newFotos: string[] = [];
       const fileList = Array.from(files) as File[];
       for (const file of fileList) {
-        const base64 = await new Promise<string>((resolve) => {
+        const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Falha ao ler arquivo'));
           reader.readAsDataURL(file);
         });
         const compressed = await compressImage(base64);
@@ -686,17 +699,26 @@ export default function App() {
       return;
     }
 
+    setLoadingMessage('Obtendo localização e salvando...');
     setIsLoading(true);
-    const location = await getCurrentLocation();
-
-    const dataToSave = {
-      ...formData,
-      location,
-      userId: user.uid,
-      createdAt: formData.createdAt || serverTimestamp(),
-    };
-
     try {
+      const location = await getCurrentLocation();
+
+      // Check total size of photos to avoid Firestore 1MB limit
+      const totalPhotosSize = formData.fotos.reduce((acc, foto) => acc + foto.length, 0);
+      if (totalPhotosSize > 800000) { // ~800KB limit to be safe
+        showNotification('As fotos anexadas são muito grandes. Tente remover algumas ou usar fotos menores.');
+        setIsLoading(false);
+        return;
+      }
+
+      const dataToSave = {
+        ...formData,
+        location,
+        userId: user.uid,
+        createdAt: formData.createdAt || serverTimestamp(),
+      };
+
       if (formData.id) {
         await updateDoc(doc(db, 'checklists', formData.id), dataToSave);
       } else {
@@ -706,9 +728,12 @@ export default function App() {
       setIsSubmitted(true);
       setShowSuccess(true);
       showNotification('Checklist salvo com sucesso!', 'success');
-    } catch (error) {
+    } catch (error: any) {
       handleFirestoreError(error, OperationType.WRITE, 'checklists');
-      showNotification('Erro ao salvar checklist. Verifique sua conexão.');
+      const errorMsg = error?.message?.includes('too large') 
+        ? 'O checklist está muito grande (limite de fotos excedido).' 
+        : 'Erro ao salvar checklist. Verifique sua conexão.';
+      showNotification(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -1131,7 +1156,7 @@ Gerado via ViaturaCheck 14º BPM.`;
             >
               <div className="bg-white p-8 rounded-[40px] shadow-2xl flex flex-col items-center gap-4">
                 <Loader2 className="w-12 h-12 text-pmpe-blue animate-spin" />
-                <p className="text-sm font-bold uppercase tracking-widest text-pmpe-blue">Processando...</p>
+                <p className="text-sm font-bold uppercase tracking-widest text-pmpe-blue">{loadingMessage}</p>
               </div>
             </motion.div>
           )}
@@ -1835,7 +1860,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <button
                       type="button"
                       onClick={() => removeFoto(index)}
-                      className="absolute top-2 right-2 p-1.5 bg-pmpe-red text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      className="absolute top-2 right-2 p-2 bg-pmpe-red text-white rounded-full shadow-lg z-10"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1868,10 +1893,11 @@ Gerado via ViaturaCheck 14º BPM.`;
             {!isSubmitted ? (
               <button
                 type="submit"
-                className="w-full bg-pmpe-blue text-white p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-pmpe-blue/90 transition-all shadow-xl flex items-center justify-center gap-3 border-b-4 border-pmpe-red"
+                disabled={isLoading}
+                className={`w-full bg-pmpe-blue text-white p-6 rounded-3xl font-bold uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 border-b-4 border-pmpe-red ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-pmpe-blue/90'}`}
               >
-                <CheckCircle2 className="w-6 h-6 text-pmpe-gold" />
-                Finalizar Checklist
+                {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <CheckCircle2 className="w-6 h-6 text-pmpe-gold" />}
+                {isLoading ? 'Salvando...' : 'Finalizar Checklist'}
               </button>
             ) : (
               <div className="space-y-6">
