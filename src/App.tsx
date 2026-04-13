@@ -569,12 +569,14 @@ export default function App() {
     const files = e.target.files;
     if (!files) return;
 
+    console.log("File change detected:", files.length, "files");
     setLoadingMessage('Processando imagens...');
     setIsLoading(true);
     try {
       const newFotos: string[] = [];
       const fileList = Array.from(files) as File[];
       for (const file of fileList) {
+        console.log("Processing file:", file.name, file.size);
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
@@ -582,6 +584,7 @@ export default function App() {
           reader.readAsDataURL(file);
         });
         const compressed = await compressImage(base64);
+        console.log("Compressed size:", compressed.length);
         newFotos.push(compressed);
       }
 
@@ -589,11 +592,13 @@ export default function App() {
         ...prev,
         fotos: [...prev.fotos, ...newFotos].slice(0, 8)
       }));
+      console.log("Photos updated in state");
     } catch (error) {
       console.error('Error processing images:', error);
       showNotification('Erro ao processar imagens.');
     } finally {
       setIsLoading(false);
+      console.log("File processing finished");
     }
   };
 
@@ -694,7 +699,11 @@ export default function App() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    console.log("Submit initiated");
+    if (!user) {
+      showNotification('Usuário não autenticado.');
+      return;
+    }
 
     // Validation for Required Fields
     if (!formData.viatura) {
@@ -719,12 +728,17 @@ export default function App() {
 
     setLoadingMessage('Obtendo localização e salvando...');
     setIsLoading(true);
+    
     try {
+      console.log("Getting location...");
       const location = await getCurrentLocation();
+      console.log("Location obtained:", location);
 
       // Check total size of photos to avoid Firestore 1MB limit
       const totalPhotosSize = formData.fotos.reduce((acc, foto) => acc + foto.length, 0);
-      if (totalPhotosSize > 800000) { // ~800KB limit to be safe
+      console.log("Total photos size:", totalPhotosSize);
+      
+      if (totalPhotosSize > 850000) { // ~850KB limit to be safe
         showNotification('As fotos anexadas são muito grandes. Tente remover algumas ou usar fotos menores.');
         setIsLoading(false);
         return;
@@ -732,28 +746,36 @@ export default function App() {
 
       const dataToSave = {
         ...formData,
-        location,
+        location: location || null,
         userId: user.uid,
+        userEmail: user.email,
+        updatedAt: serverTimestamp(),
         createdAt: formData.createdAt || serverTimestamp(),
       };
 
+      console.log("Saving to Firestore...");
       if (formData.id) {
         await updateDoc(doc(db, 'checklists', formData.id), dataToSave);
+        console.log("Document updated");
       } else {
         const docRef = await addDoc(collection(db, 'checklists'), dataToSave);
+        console.log("Document created with ID:", docRef.id);
         setFormData(prev => ({ ...prev, id: docRef.id, location }));
       }
+      
       setIsSubmitted(true);
       setShowSuccess(true);
       showNotification('Checklist salvo com sucesso!', 'success');
     } catch (error: any) {
+      console.error("Submit error:", error);
       handleFirestoreError(error, OperationType.WRITE, 'checklists');
       const errorMsg = error?.message?.includes('too large') 
         ? 'O checklist está muito grande (limite de fotos excedido).' 
-        : 'Erro ao salvar checklist. Verifique sua conexão.';
+        : 'Erro ao salvar checklist. Verifique sua conexão e tente novamente.';
       showNotification(errorMsg);
     } finally {
       setIsLoading(false);
+      console.log("Submit finished");
     }
   };
 
@@ -1234,9 +1256,17 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">ViaturaCheck - 14º BPM</h1>
-              <p className="text-[10px] md:text-xs font-medium opacity-90 uppercase tracking-wide">
-                Batalhão Cel PM Manoel de Souza Ferraz
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] md:text-xs font-medium opacity-90 uppercase tracking-wide">
+                  Batalhão Cel PM Manoel de Souza Ferraz
+                </p>
+                <button 
+                  onClick={() => logout()}
+                  className="md:hidden text-[9px] font-bold uppercase text-white/50 hover:text-pmpe-red transition-colors"
+                >
+                  [Sair]
+                </button>
+              </div>
               <p className="text-[9px] opacity-70 uppercase tracking-widest">14º BPM - Polícia Militar de Pernambuco</p>
             </div>
           </div>
@@ -1326,6 +1356,8 @@ Gerado via ViaturaCheck 14º BPM.`;
         </section>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {!isSubmitted && (
+            <>
           {/* Section: Identificação */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
             <div 
@@ -1950,7 +1982,9 @@ Gerado via ViaturaCheck 14º BPM.`;
         </motion.div>
       )}
     </AnimatePresence>
-  </div>
+          </div>
+          </>
+          )}
 
           {/* Submit, PDF and WhatsApp Buttons */}
           <div className="grid grid-cols-1 gap-4">
@@ -2508,8 +2542,8 @@ Gerado via ViaturaCheck 14º BPM.`;
           </motion.div>
         )}
       </AnimatePresence>
-      </div>
       </>
       )}
+    </div>
   );
 }
