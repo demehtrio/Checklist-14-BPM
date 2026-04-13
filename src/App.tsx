@@ -656,7 +656,7 @@ export default function App() {
 📅 Data: ${formData.dataArmou}
 🔐 Km final: ${formData.kmFinal}
 ⌚ Hora que desarmou: ${formData.horaDesarmou}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
+👮🏻‍♂️ CONDUTOR: ${formData.condutorEntra}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -679,7 +679,7 @@ export default function App() {
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
+👮🏻‍♂️ CONDUTOR: ${formData.condutorEntra}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -703,7 +703,7 @@ export default function App() {
 🔐 Km final: ${formData.kmFinal}
 📅 Data: ${formData.dataArmou}
 ⌚ Hora que desarmou: ${formData.horaDesarmou}
-👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
+👮🏻‍♂️ CONDUTOR: ${formData.condutorEntra}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -720,7 +720,7 @@ Data: ${formData.dataArmou}
 Hora Desarmou: ${formData.horaDesarmou}
 
 CONDUTORES:
-Entra: ${formData.condutorEntra}
+CONDUTOR: ${formData.condutorEntra}
 
 KILOMETRAGEM:
 KM Inicial: ${formData.kmInicial}
@@ -829,8 +829,8 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // CONDUTORES
       addSection('CONDUTORES', [
-        ['CONDUTOR que Entra', formData.condutorEntra],
-        ['Tel. CONDUTOR Entra', formData.telCondutorEntra],
+        ['CONDUTOR', formData.condutorEntra],
+        ['Telefone', formData.telCondutorEntra],
       ]);
 
       // Estado Técnico
@@ -1114,7 +1114,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   <div className="space-y-6 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SearchableSelect 
-                  label="CONDUTOR que Entra (Grad / Nome / Mat)"
+                  label="CONDUTOR"
                   value={formData.condutorEntra}
                   onChange={(val) => setFormData({...formData, condutorEntra: val})}
                   options={POLICIAIS}
@@ -1122,7 +1122,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   variant="green"
                 />
                 <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                  <label className="text-xs font-bold uppercase text-[#128C7E]">Telefone CONDUTOR que Entra</label>
+                  <label className="text-xs font-bold uppercase text-[#128C7E]">Telefone</label>
                   <input 
                     type="tel"
                     className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
@@ -1604,7 +1604,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <SummaryItem label="Viatura" value={formData.viatura} />
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
-                    <SummaryItem label="CONDUTOR Entra" value={formData.condutorEntra} />
+                    <SummaryItem label="CONDUTOR" value={formData.condutorEntra} />
                   </div>
 
                   {/* Editable Fields (Finalization) */}
