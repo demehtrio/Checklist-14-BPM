@@ -650,7 +650,7 @@ Viatura: ${formData.viatura}
 Placa: ${formData.placa}
 Data: ${formData.dataArmou}
 
-CONDUTORES:
+RESPONSÁVEL PELO PREENCHIMENTO:
 CONDUTOR: ${formData.condutorEntra}
 
 KILOMETRAGEM:
@@ -757,8 +757,8 @@ Gerado via ViaturaCheck 14º BPM.`;
         ['Mapa Diário', formData.mapaDiario],
       ]);
 
-      // CONDUTORES
-      addSection('CONDUTORES', [
+      // RESPONSÁVEL PELO PREENCHIMENTO
+      addSection('RESPONSÁVEL PELO PREENCHIMENTO', [
         ['CONDUTOR', formData.condutorEntra],
         ['Telefone', formData.telCondutorEntra],
       ]);
@@ -1017,7 +1017,7 @@ Gerado via ViaturaCheck 14º BPM.`;
       </AnimatePresence>
     </div>
 
-          {/* Section: CONDUTORES */}
+          {/* Section: RESPONSÁVEL PELO PREENCHIMENTO */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-pmpe-blue/10">
             <div 
               className="flex items-center justify-between cursor-pointer border-b border-pmpe-blue/5 pb-4"
@@ -1025,7 +1025,7 @@ Gerado via ViaturaCheck 14º BPM.`;
             >
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5 text-pmpe-blue" />
-                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">CONDUTORES</h3>
+                <h3 className="font-bold uppercase text-xs tracking-widest text-pmpe-blue">RESPONSÁVEL PELO PREENCHIMENTO</h3>
               </div>
               <ChevronDown className={`w-4 h-4 text-pmpe-blue transition-transform duration-300 ${expandedSections.condutores ? 'rotate-180' : ''}`} />
             </div>
