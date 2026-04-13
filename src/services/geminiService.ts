@@ -4,17 +4,14 @@ export interface ChecklistData {
   id?: string;
   userId?: string;
   createdAt?: any;
-  servico: string;
   funcao: string;
   dataArmou: string;
-  horaArmou: string;
   condutorSai: string;
   telCondutorSai: string;
   condutorEntra: string;
   telCondutorEntra: string;
   viatura: string;
   placa: string;
-  prefixo: string;
   kmInicial: string;
   saldoCombustivel: string;
   mapaDiario: string;
@@ -41,17 +38,14 @@ export interface ChecklistData {
 export const checklistSchema = {
   type: Type.OBJECT,
   properties: {
-    servico: { type: Type.STRING, description: "Tipo de serviço (GUARNIÇÃO, PJES, MISSÃO ADM, VIAGEM, OPERAÇÃO)" },
     funcao: { type: Type.STRING, description: "Função do condutor (MOTORISTA, COMANDANTE, PATRULHEIRO, etc.)" },
     dataArmou: { type: Type.STRING, description: "Data da inspeção (DD/MM/AAAA)" },
-    horaArmou: { type: Type.STRING, description: "Horário que armou (HH:MM)" },
     condutorSai: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que sai" },
     telCondutorSai: { type: Type.STRING, description: "Telefone do condutor que sai" },
     condutorEntra: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que entra" },
     telCondutorEntra: { type: Type.STRING, description: "Telefone do condutor que entra" },
     viatura: { type: Type.STRING, description: "Identificação da viatura (Patrimônio/Modelo, ex: 640150/CHEVROLET S-10)" },
     placa: { type: Type.STRING, description: "Placa da viatura (ex: ABC-1234)" },
-    prefixo: { type: Type.STRING, description: "Prefixo operacional (ex: GT 14111)" },
     kmInicial: { type: Type.STRING, description: "Quilometragem inicial" },
     saldoCombustivel: { type: Type.STRING, description: "Saldo de combustível em R$" },
     mapaDiario: { type: Type.STRING, description: "Status do mapa diário (SIM, NÃO)" },

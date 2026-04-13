@@ -107,17 +107,14 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 const INITIAL_STATE: ChecklistData = {
-  servico: '',
   funcao: '',
   dataArmou: new Date().toLocaleDateString('pt-BR'),
-  horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
   condutorSai: '',
   telCondutorSai: '',
   condutorEntra: '',
   telCondutorEntra: '',
   viatura: '',
   placa: '',
-  prefixo: '',
   kmInicial: '',
   saldoCombustivel: '',
   mapaDiario: 'SIM',
@@ -221,46 +218,6 @@ const PARTES_EXTERNAS = [
 
 const LUZES_TRASEIRAS = [
   "TODAS FUNCIONANDO", "Luz de Freio Dir. Queimada", "Luz de Freio Esq. Queimada", "Lanterna Traseira Dir. Queimada", "Lanterna Traseira Esq. Queimada"
-];
-
-const PREFIXOS = [
-  "GT 14100 - COMANDO",
-  "GT 14200 - SUBCOMANDO",
-  "GT 14000- OPERAÇÕES",
-  "GT 14111",
-  "GT 14112",
-  "GT 14113",
-  "GT 14114",
-  "GT 14115",
-  "GT 14116",
-  "GT 14117",
-  "GT 14118",
-  "GT 14121",
-  "GT 14211",
-  "GT 14311",
-  "GT 14321",
-  "GT 14331",
-  "GTR 14050",
-  "GG 14050",
-  "GG 14150",
-  "GG 14250",
-  "GG 14350",
-  "GV 14050",
-  "MP 14050",
-  "VE 14111",
-  "VE 14112",
-  "VE 14113",
-  "GT 14115 FECHA BATALHÃO",
-  "GT ESCOLTA",
-  "MO 14111",
-  "GT DISPERSÃO",
-  "OPERAÇÃO BICENTENÁRIO - 06H AS 14H",
-  "GTR 14150",
-  "OPERAÇÃO ENEM",
-  "GE 14101",
-  "GE 14102",
-  "GE EXTRA - 14150",
-  "GE EXTRA - 14250"
 ];
 
 const SummaryItem = ({ label, value }: { label: string, value: string | string[] }) => (
@@ -616,7 +573,6 @@ export default function App() {
     setFormData({
       ...INITIAL_STATE,
       dataArmou: new Date().toLocaleDateString('pt-BR'),
-      horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       horaDesarmou: '',
     });
     setIsSubmitted(false);
@@ -708,18 +664,12 @@ export default function App() {
 
     const placaFinal = formData.placa || placaFromVtr;
 
-    // Clean up prefixo (take only the code before the dash if it exists)
-    const prefixoFormatado = formData.prefixo.split(' - ')[0];
-
     const message = `🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
-📟 Prefixo: ${prefixoFormatado.trim()}
-🧮 Emprego: ${formData.servico}
 👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
-⌚ Hora que armou: ${formData.horaArmou}
 🔐 Km final: ${formData.kmFinal}
 ⌚ Hora que desarmou: ${formData.horaDesarmou}
 👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
@@ -738,18 +688,14 @@ export default function App() {
     else if (parts.length === 2) [patrimonio, modelo] = parts;
 
     const placaFinal = formData.placa || placaFromVtr;
-    const prefixoFormatado = formData.prefixo.split(' - ')[0];
 
     const message = `✅ *CHECK-IN VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
-📟 Prefixo: ${prefixoFormatado.trim()}
-🧮 Emprego: ${formData.servico}
 👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
-⌚ Hora que armou: ${formData.horaArmou}
 👮🏻‍♂️ Condutor/Mat: ${formData.condutorEntra}`;
 
     const encodedMessage = encodeURIComponent(message);
@@ -766,13 +712,10 @@ export default function App() {
     else if (parts.length === 2) [patrimonio, modelo] = parts;
 
     const placaFinal = formData.placa || placaFromVtr;
-    const prefixoFormatado = formData.prefixo.split(' - ')[0];
 
     const message = `🏁 *CHECK-OUT VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
-📟 Prefixo: ${prefixoFormatado.trim()}
-🧮 Emprego: ${formData.servico}
 👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔐 Km final: ${formData.kmFinal}
@@ -789,13 +732,10 @@ export default function App() {
     const body = `CHECKLIST DE VIATURA - 14º BPM
 
 DADOS DO SERVIÇO:
-Serviço: ${formData.servico}
 Função: ${formData.funcao}
 Viatura: ${formData.viatura}
-Prefixo: ${formData.prefixo}
 Placa: ${formData.placa}
 Data: ${formData.dataArmou}
-Hora Armou: ${formData.horaArmou}
 Hora Desarmou: ${formData.horaDesarmou}
 
 CONDUTORES:
@@ -901,13 +841,10 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // Identificação
       addSection('Identificação', [
-        ['Serviço', formData.servico],
         ['Função', formData.funcao],
         ['Placa', formData.placa],
         ['Viatura', formData.viatura],
-        ['Prefixo', formData.prefixo],
         ['Data', formData.dataArmou],
-        ['Hora que Armou', formData.horaArmou],
         ['Mapa Diário', formData.mapaDiario],
       ]);
 
@@ -1117,15 +1054,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
               <SearchableSelect 
-                label="Serviço"
-                value={formData.servico}
-                onChange={(val) => setFormData({...formData, servico: val})}
-                options={["GUARNIÇÃO", "PJES", "MISSÃO ADM", "VIAGEM", "OPERAÇÃO"]}
-                placeholder="Selecione o serviço"
-                variant="green"
-              />
-
-              <SearchableSelect 
                 label="Placa"
                 value={formData.placa}
                 onChange={(val) => {
@@ -1168,15 +1096,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                 variant="green"
               />
 
-              <SearchableSelect 
-                label="Prefixo"
-                value={formData.prefixo}
-                onChange={(val) => setFormData({...formData, prefixo: val})}
-                options={PREFIXOS}
-                placeholder="Selecione o prefixo"
-                variant="green"
-              />
-
               <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
                 <label className="text-xs font-bold uppercase text-[#128C7E]">Data</label>
                 <input 
@@ -1186,27 +1105,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                   onChange={(e) => setFormData({...formData, dataArmou: e.target.value})}
                   placeholder="DD/MM/AAAA"
                 />
-              </div>
-
-              <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                <label className="text-xs font-bold uppercase text-[#128C7E]">Hora que Armou</label>
-                <div className="relative">
-                  <input 
-                    type="text"
-                    className="w-full p-3 pr-12 bg-white border border-[#25D366]/10 rounded-xl text-sm font-medium text-[#128C7E] focus:ring-2 focus:ring-[#25D366]/20 outline-none placeholder:text-[#128C7E]/40"
-                    value={formData.horaArmou}
-                    onChange={(e) => setFormData({...formData, horaArmou: e.target.value})}
-                    placeholder="HH:MM"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({...formData, horaArmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#128C7E]/40 hover:text-[#128C7E] transition-colors"
-                    title="Usar hora atual"
-                  >
-                    <Clock className="w-5 h-5" />
-                  </button>
-                </div>
               </div>
             </div>
           </motion.div>
@@ -1756,13 +1654,10 @@ Gerado via ViaturaCheck 14º BPM.`;
 
                   {/* Summary Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <SummaryItem label="Serviço" value={formData.servico} />
                     <SummaryItem label="Função" value={formData.funcao} />
                     <SummaryItem label="Viatura" value={formData.viatura} />
-                    <SummaryItem label="Prefixo" value={formData.prefixo} />
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
-                    <SummaryItem label="Hora Armou" value={formData.horaArmou} />
                     <SummaryItem label="CONDUTOR Sai" value={formData.condutorSai} />
                     <SummaryItem label="CONDUTOR Entra" value={formData.condutorEntra} />
                   </div>
@@ -1942,10 +1837,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                             <span className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
                               {entry.dataArmou}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {entry.horaArmou}
                             </span>
                           </div>
                         </div>
