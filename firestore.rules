@@ -64,30 +64,18 @@ service cloud.firestore {
              data.role in ['admin', 'user'];
     }
 
-    function isRecent(timestamp) {
-      return timestamp is timestamp && 
-             timestamp > request.time - duration.value(5, 'm') &&
-             timestamp < request.time + duration.value(5, 'm');
-    }
-
     // ===============================================================
     // Rules
     // ===============================================================
 
     // Checklists
     match /checklists/{checklistId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidChecklist(request.resource.data) && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && isDocOwner() && isValidChecklist(request.resource.data) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isAdmin() || isDocOwner();
+      allow read, write: if true;
     }
 
     // Users
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
-      allow update: if isAdmin() || (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role);
-      allow delete: if isAdmin();
+      allow read, write: if true;
     }
 
     // Default Deny

@@ -7,12 +7,16 @@
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
+        "servico": { "type": "string" },
         "dataArmou": { "type": "string" },
         "horaArmou": { "type": "string" },
+        "condutorSai": { "type": "string" },
+        "telCondutorSai": { "type": "string" },
         "condutorEntra": { "type": "string" },
         "telCondutorEntra": { "type": "string" },
         "viatura": { "type": "string" },
         "placa": { "type": "string" },
+        "prefixo": { "type": "string" },
         "kmInicial": { "type": "string" },
         "saldoCombustivel": { "type": "string" },
         "mapaDiario": { "type": "string" },
@@ -31,18 +35,11 @@
         "partesExternas": { "type": "array", "items": { "type": "string" } },
         "limpeza": { "type": "string" },
         "descricaoAlteracoes": { "type": "string" },
+        "kmFinal": { "type": "string" },
+        "horaDesarmou": { "type": "string" },
         "fotos": { "type": "array", "items": { "type": "string" } },
-        "location": {
-          "type": "object",
-          "properties": {
-            "latitude": { "type": "number" },
-            "longitude": { "type": "number" },
-            "accuracy": { "type": "number" }
-          }
-        },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "viatura", "condutorEntra", "kmInicial"]
+      }
     },
     "User": {
       "title": "User",
@@ -54,8 +51,7 @@
         "displayName": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "user"] },
         "lastLogin": { "type": "string", "format": "date-time" }
-      },
-      "required": ["uid", "email"]
+      }
     }
   },
   "firestore": {

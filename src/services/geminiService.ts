@@ -4,12 +4,17 @@ export interface ChecklistData {
   id?: string;
   userId?: string;
   createdAt?: any;
+  servico: string;
+  funcao: string;
   dataArmou: string;
   horaArmou: string;
+  condutorSai: string;
+  telCondutorSai: string;
   condutorEntra: string;
   telCondutorEntra: string;
   viatura: string;
   placa: string;
+  prefixo: string;
   kmInicial: string;
   saldoCombustivel: string;
   mapaDiario: string;
@@ -28,24 +33,25 @@ export interface ChecklistData {
   partesExternas: string[];
   limpeza: string;
   descricaoAlteracoes: string;
+  kmFinal: string;
+  horaDesarmou: string;
   fotos: string[];
-  location?: {
-    latitude: number;
-    longitude: number;
-    accuracy: number;
-  };
-  isSyncing?: boolean;
 }
 
 export const checklistSchema = {
   type: Type.OBJECT,
   properties: {
+    servico: { type: Type.STRING, description: "Tipo de serviço (GUARNIÇÃO, PJES, MISSÃO ADM, VIAGEM, OPERAÇÃO)" },
+    funcao: { type: Type.STRING, description: "Função do condutor (MOTORISTA, COMANDANTE, PATRULHEIRO, etc.)" },
     dataArmou: { type: Type.STRING, description: "Data da inspeção (DD/MM/AAAA)" },
     horaArmou: { type: Type.STRING, description: "Horário que armou (HH:MM)" },
+    condutorSai: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que sai" },
+    telCondutorSai: { type: Type.STRING, description: "Telefone do condutor que sai" },
     condutorEntra: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que entra" },
     telCondutorEntra: { type: Type.STRING, description: "Telefone do condutor que entra" },
     viatura: { type: Type.STRING, description: "Identificação da viatura (Patrimônio/Modelo, ex: 640150/CHEVROLET S-10)" },
     placa: { type: Type.STRING, description: "Placa da viatura (ex: ABC-1234)" },
+    prefixo: { type: Type.STRING, description: "Prefixo operacional (ex: GT 14111)" },
     kmInicial: { type: Type.STRING, description: "Quilometragem inicial" },
     saldoCombustivel: { type: Type.STRING, description: "Saldo de combustível em R$" },
     mapaDiario: { type: Type.STRING, description: "Status do mapa diário (SIM, NÃO)" },
@@ -78,15 +84,16 @@ export const checklistSchema = {
       items: { type: Type.STRING },
       description: "Alterações em partes externas" 
     },
-    limpeza: { type: Type.STRING, description: "Estado de limpeza (SIM, NÃO)" },
+    limpeza: { type: Type.STRING, description: "Estado de limpeza" },
     descricaoAlteracoes: { type: Type.STRING, description: "Descrição detalhada de alterações ou avarias" },
+    kmFinal: { type: Type.STRING, description: "Quilometragem final" },
+    horaDesarmou: { type: Type.STRING, description: "Horário que desarmou/encerrou" },
     fotos: { 
       type: Type.ARRAY, 
       items: { type: Type.STRING },
       description: "Lista de fotos (base64) anexadas" 
     },
   },
-  required: ["viatura", "placa"],
 };
 
 export async function parseChecklistDescription(description: string): Promise<Partial<ChecklistData>> {
