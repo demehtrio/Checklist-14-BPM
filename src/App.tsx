@@ -641,51 +641,6 @@ export default function App() {
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
   };
 
-  const shareCheckInWhatsApp = () => {
-    const parts = formData.viatura.split('/');
-    let patrimonio = parts[0];
-    let placaFromVtr = '';
-    let modelo = '';
-
-    if (parts.length === 3) [patrimonio, placaFromVtr, modelo] = parts;
-    else if (parts.length === 2) [patrimonio, modelo] = parts;
-
-    const placaFinal = formData.placa || placaFromVtr;
-
-    const message = `✅ *CHECK-IN VIATURA*
-🪙 Pat: ${patrimonio.trim() || ''}
-⛔ Placa: ${placaFinal.trim() || ''}
-🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-🔓 Km inic: ${formData.kmInicial}
-📅 Data: ${formData.dataArmou}
-👮🏻‍♂️ CONDUTOR: ${formData.condutorEntra}`;
-
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
-  };
-
-  const shareCheckOutWhatsApp = () => {
-    const parts = formData.viatura.split('/');
-    let patrimonio = parts[0];
-    let placaFromVtr = '';
-    let modelo = '';
-
-    if (parts.length === 3) [patrimonio, placaFromVtr, modelo] = parts;
-    else if (parts.length === 2) [patrimonio, modelo] = parts;
-
-    const placaFinal = formData.placa || placaFromVtr;
-
-    const message = `🏁 *CHECK-OUT VIATURA*
-🪙 Pat: ${patrimonio.trim() || ''}
-⛔ Placa: ${placaFinal.trim() || ''}
-🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-📅 Data: ${formData.dataArmou}
-👮🏻‍♂️ CONDUTOR: ${formData.condutorEntra}`;
-
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
-  };
-
   const shareEmail = () => {
     const subject = `Checklist Viatura - ${formData.viatura} - ${formData.dataArmou}`;
     const body = `CHECKLIST DE VIATURA - 14º BPM
@@ -1552,32 +1507,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4">
-                    <h4 className="text-[10px] font-bold uppercase text-pmpe-blue/60 tracking-widest flex items-center gap-2">
-                      <ArrowRightLeft className="w-4 h-4" />
-                      Opções de Check-in / Check-out
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={shareCheckInWhatsApp}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
-                      >
-                        <LogIn className="w-6 h-6" />
-                        <span className="text-[9px] font-bold uppercase">Check-in Zap</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={shareCheckOutWhatsApp}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
-                      >
-                        <LogOut className="w-6 h-6" />
-                        <span className="text-[9px] font-bold uppercase">Check-out Zap</span>
-                      </button>
-                    </div>
-                  </div>
-
+                <div className="grid grid-cols-1 gap-4">
                   <div className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4">
                     <h4 className="text-[10px] font-bold uppercase text-pmpe-blue/60 tracking-widest flex items-center gap-2">
                       <FileText className="w-4 h-4" />
@@ -1884,23 +1814,6 @@ Gerado via ViaturaCheck 14º BPM.`;
               <h2 className="text-2xl font-bold text-pmpe-blue">Enviado com Sucesso!</h2>
               <p className="text-sm text-gray-500">O checklist da viatura foi registrado no sistema PMPE.</p>
               
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={shareCheckInWhatsApp}
-                  className="flex flex-col items-center justify-center gap-1 py-3 bg-pmpe-blue/5 text-pmpe-blue rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Check-in Zap
-                </button>
-                <button
-                  onClick={shareCheckOutWhatsApp}
-                  className="flex flex-col items-center justify-center gap-1 py-3 bg-pmpe-blue/5 text-pmpe-blue rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-pmpe-blue/10 transition-all border border-pmpe-blue/10"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Check-out Zap
-                </button>
-              </div>
-
               <div className="flex flex-col gap-2 pt-2">
                 <button 
                   onClick={shareWhatsApp}
