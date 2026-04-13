@@ -41,6 +41,8 @@ import { parseChecklistDescription, ChecklistData, extractLicensePlateFromImage 
 import { POLICIAIS } from './constants/policiais';
 import { 
   auth, 
+  loginWithGoogle,
+  logout,
   db, 
   onAuthStateChanged, 
   FirebaseUser,
@@ -1178,6 +1180,46 @@ Gerado via ViaturaCheck 14º BPM.`;
           )}
         </AnimatePresence>
 
+        {!isAuthReady ? (
+          <div className="min-h-screen flex items-center justify-center p-6">
+            <div className="bg-white p-8 rounded-[40px] shadow-2xl flex flex-col items-center gap-6 max-w-sm w-full text-center">
+              <Loader2 className="w-12 h-12 text-pmpe-blue animate-spin" />
+              <p className="font-bold text-pmpe-blue uppercase tracking-widest">Iniciando Sistema...</p>
+            </div>
+          </div>
+        ) : !user ? (
+          <div className="min-h-screen flex items-center justify-center p-6 bg-pmpe-bg">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white p-10 rounded-[40px] shadow-2xl flex flex-col items-center gap-8 max-w-md w-full text-center border-b-8 border-pmpe-red"
+            >
+              <div className="w-24 h-24 bg-pmpe-blue rounded-full flex items-center justify-center shadow-xl">
+                <img 
+                  src="https://i.pinimg.com/originals/44/e4/8c/44e48c5ff461edb7623bab64bd898d8d.png" 
+                  alt="Brasão PMPE" 
+                  className="w-16 h-16 object-contain brightness-110"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-bold text-pmpe-blue uppercase tracking-tight">ViaturaCheck</h1>
+                <p className="text-xs text-black/60 font-medium uppercase tracking-widest">14º BPM - PMPE</p>
+              </div>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Acesse o sistema com sua conta institucional para realizar o checklist das viaturas.
+              </p>
+              <button
+                onClick={() => loginWithGoogle()}
+                className="w-full bg-pmpe-blue text-white p-5 rounded-2xl font-bold uppercase tracking-widest hover:bg-pmpe-blue/90 transition-all shadow-xl flex items-center justify-center gap-3 border-b-4 border-pmpe-red"
+              >
+                <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
+                Entrar com Google
+              </button>
+            </motion.div>
+          </div>
+        ) : (
+          <>
         {/* Header */}
       <header className="bg-pmpe-blue text-white p-6 sticky top-0 z-50 shadow-lg border-b-4 border-pmpe-red">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -1230,6 +1272,12 @@ Gerado via ViaturaCheck 14º BPM.`;
             </div>
             <div className="hidden md:block text-right">
               <p className="text-xs font-mono opacity-50">{new Date().toLocaleDateString()}</p>
+              <button 
+                onClick={() => logout()}
+                className="text-[9px] font-bold uppercase text-white/50 hover:text-pmpe-red transition-colors"
+              >
+                Sair do Sistema
+              </button>
             </div>
           </div>
         </div>
@@ -2461,5 +2509,7 @@ Gerado via ViaturaCheck 14º BPM.`;
         )}
       </AnimatePresence>
       </div>
+      </>
+      )}
   );
 }
