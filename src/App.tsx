@@ -107,10 +107,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 const INITIAL_STATE: ChecklistData = {
-  funcao: '',
   dataArmou: new Date().toLocaleDateString('pt-BR'),
-  condutorSai: '',
-  telCondutorSai: '',
   condutorEntra: '',
   telCondutorEntra: '',
   viatura: '',
@@ -137,18 +134,6 @@ const INITIAL_STATE: ChecklistData = {
   horaDesarmou: '',
   fotos: [],
 };
-
-const FUNCOES = [
-  "MOTORISTA",
-  "COMANDANTE",
-  "PATRULHEIRO",
-  "AUXILIAR",
-  "SENTINELA",
-  "PERMANENTE",
-  "COMANDANTE DE GUARNIÇÃO",
-  "MOTORISTA DE GUARNIÇÃO",
-  "PATRULHEIRO DE GUARNIÇÃO"
-].sort();
 
 const VIATURA_MAP: Record<string, string> = {
   "SNZ8F51": "640150/CHEVROLET S-10",
@@ -666,7 +651,6 @@ export default function App() {
 
     const message = `🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
-👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
@@ -692,7 +676,6 @@ export default function App() {
     const message = `✅ *CHECK-IN VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
-👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
@@ -716,7 +699,6 @@ export default function App() {
     const message = `🏁 *CHECK-OUT VIATURA*
 🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
-👮🏻‍♂️ Função: ${formData.funcao}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔐 Km final: ${formData.kmFinal}
 📅 Data: ${formData.dataArmou}
@@ -732,14 +714,12 @@ export default function App() {
     const body = `CHECKLIST DE VIATURA - 14º BPM
 
 DADOS DO SERVIÇO:
-Função: ${formData.funcao}
 Viatura: ${formData.viatura}
 Placa: ${formData.placa}
 Data: ${formData.dataArmou}
 Hora Desarmou: ${formData.horaDesarmou}
 
 CONDUTORES:
-Sai: ${formData.condutorSai}
 Entra: ${formData.condutorEntra}
 
 KILOMETRAGEM:
@@ -841,7 +821,6 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // Identificação
       addSection('Identificação', [
-        ['Função', formData.funcao],
         ['Placa', formData.placa],
         ['Viatura', formData.viatura],
         ['Data', formData.dataArmou],
@@ -850,8 +829,6 @@ Gerado via ViaturaCheck 14º BPM.`;
 
       // CONDUTORES
       addSection('CONDUTORES', [
-        ['CONDUTOR que Sai', formData.condutorSai],
-        ['Tel. CONDUTOR Sai', formData.telCondutorSai],
         ['CONDUTOR que Entra', formData.condutorEntra],
         ['Tel. CONDUTOR Entra', formData.telCondutorEntra],
       ]);
@@ -1135,36 +1112,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                   className={expandedSections.condutores ? "overflow-visible" : "overflow-hidden"}
                 >
                   <div className="space-y-6 pt-6">
-              <SearchableSelect 
-                label="Função do Condutor"
-                value={formData.funcao}
-                onChange={(val) => setFormData({...formData, funcao: val})}
-                options={FUNCOES}
-                placeholder="Selecione a função"
-                variant="green"
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SearchableSelect 
-                  label="CONDUTOR que Sai (Grad / Nome / Mat)"
-                  value={formData.condutorSai}
-                  onChange={(val) => setFormData({...formData, condutorSai: val})}
-                  options={POLICIAIS}
-                  placeholder="Selecione o policial"
-                  variant="green"
-                />
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-[#128C7E]/70">Telefone CONDUTOR que Sai</label>
-                  <input 
-                    type="tel"
-                    className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40"
-                    placeholder="(81) 9..."
-                    value={formData.telCondutorSai}
-                    onChange={(e) => setFormData({...formData, telCondutorSai: e.target.value})}
-                  />
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SearchableSelect 
                   label="CONDUTOR que Entra (Grad / Nome / Mat)"
@@ -1654,11 +1601,9 @@ Gerado via ViaturaCheck 14º BPM.`;
 
                   {/* Summary Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <SummaryItem label="Função" value={formData.funcao} />
                     <SummaryItem label="Viatura" value={formData.viatura} />
                     <SummaryItem label="Placa" value={formData.placa} />
                     <SummaryItem label="Data" value={formData.dataArmou} />
-                    <SummaryItem label="CONDUTOR Sai" value={formData.condutorSai} />
                     <SummaryItem label="CONDUTOR Entra" value={formData.condutorEntra} />
                   </div>
 

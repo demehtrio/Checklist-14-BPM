@@ -4,10 +4,7 @@ export interface ChecklistData {
   id?: string;
   userId?: string;
   createdAt?: any;
-  funcao: string;
   dataArmou: string;
-  condutorSai: string;
-  telCondutorSai: string;
   condutorEntra: string;
   telCondutorEntra: string;
   viatura: string;
@@ -38,10 +35,7 @@ export interface ChecklistData {
 export const checklistSchema = {
   type: Type.OBJECT,
   properties: {
-    funcao: { type: Type.STRING, description: "Função do condutor (MOTORISTA, COMANDANTE, PATRULHEIRO, etc.)" },
     dataArmou: { type: Type.STRING, description: "Data da inspeção (DD/MM/AAAA)" },
-    condutorSai: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que sai" },
-    telCondutorSai: { type: Type.STRING, description: "Telefone do condutor que sai" },
     condutorEntra: { type: Type.STRING, description: "Graduação / Nome / Matrícula do condutor que entra" },
     telCondutorEntra: { type: Type.STRING, description: "Telefone do condutor que entra" },
     viatura: { type: Type.STRING, description: "Identificação da viatura (Patrimônio/Modelo, ex: 640150/CHEVROLET S-10)" },
