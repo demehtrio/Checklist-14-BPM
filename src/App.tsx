@@ -130,8 +130,6 @@ const INITIAL_STATE: ChecklistData = {
   partesExternas: ['Sem Alteração'],
   limpeza: 'LIMPA',
   descricaoAlteracoes: '',
-  kmFinal: '',
-  horaDesarmou: '',
   fotos: [],
 };
 
@@ -527,22 +525,6 @@ export default function App() {
     }
   };
 
-  const handleUpdateClosure = async () => {
-    if (!user || !formData.id) return;
-    setIsGeneratingPDF(true); // Reusing this state for loading
-    try {
-      await updateDoc(doc(db, 'checklists', formData.id), {
-        kmFinal: formData.kmFinal,
-        horaDesarmou: formData.horaDesarmou
-      });
-      alert('Dados de encerramento salvos com sucesso!');
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'checklists');
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
   const deleteFromHistory = async (id: string) => {
     if (!user) return;
     if (!window.confirm('Tem certeza que deseja excluir este registro?')) return;
@@ -558,7 +540,6 @@ export default function App() {
     setFormData({
       ...INITIAL_STATE,
       dataArmou: new Date().toLocaleDateString('pt-BR'),
-      horaDesarmou: '',
     });
     setIsSubmitted(false);
     setShowSuccess(false);
@@ -654,8 +635,6 @@ export default function App() {
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
 🔓 Km inic: ${formData.kmInicial}
 📅 Data: ${formData.dataArmou}
-🔐 Km final: ${formData.kmFinal}
-⌚ Hora que desarmou: ${formData.horaDesarmou}
 👮🏻‍♂️ CONDUTOR: ${formData.condutorEntra}${formData.fotos.length > 0 ? `\n📸 Fotos: ${formData.fotos.length} anexadas` : ''}`;
 
     const encodedMessage = encodeURIComponent(message);
@@ -700,9 +679,7 @@ export default function App() {
 🪙 Pat: ${patrimonio.trim() || ''}
 ⛔ Placa: ${placaFinal.trim() || ''}
 🚓 Vtr: ${modelo.trim() || patrimonio.trim() || ''}
-🔐 Km final: ${formData.kmFinal}
 📅 Data: ${formData.dataArmou}
-⌚ Hora que desarmou: ${formData.horaDesarmou}
 👮🏻‍♂️ CONDUTOR: ${formData.condutorEntra}`;
 
     const encodedMessage = encodeURIComponent(message);
@@ -717,14 +694,12 @@ DADOS DO SERVIÇO:
 Viatura: ${formData.viatura}
 Placa: ${formData.placa}
 Data: ${formData.dataArmou}
-Hora Desarmou: ${formData.horaDesarmou}
 
 CONDUTORES:
 CONDUTOR: ${formData.condutorEntra}
 
 KILOMETRAGEM:
 KM Inicial: ${formData.kmInicial}
-KM Final: ${formData.kmFinal}
 
 EQUIPAMENTOS E CONDIÇÕES:
 Equipamentos: ${formData.equipamentos.join(', ')}
@@ -837,8 +812,6 @@ Gerado via ViaturaCheck 14º BPM.`;
       addSection('Estado Técnico', [
         ['KM Inicial', formData.kmInicial],
         ['Saldo Combustível', formData.saldoCombustivel],
-        ['KM Final', formData.kmFinal || 'Não informado'],
-        ['Hora que Desarmou', formData.horaDesarmou],
         ['Limpeza', formData.limpeza],
         ['Equipamentos', formData.equipamentos.join(', ') || 'Nenhum'],
       ]);
@@ -1179,35 +1152,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                           value={formData.saldoCombustivel}
                           onChange={(e) => setFormData({...formData, saldoCombustivel: e.target.value})}
                         />
-                      </div>
-                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">KM Final</label>
-                        <input 
-                          type="number"
-                          className="w-full p-3 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
-                          value={formData.kmFinal}
-                          onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2 p-4 bg-white border border-[#25D366]/20 rounded-2xl">
-                        <label className="text-xs font-bold uppercase text-[#128C7E]/70">Hora que Desarmou</label>
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            className="w-full p-3 pr-12 bg-white border border-[#25D366]/10 rounded-xl text-sm text-[#128C7E] placeholder:text-[#128C7E]/40 outline-none focus:ring-2 focus:ring-[#25D366]/20"
-                            value={formData.horaDesarmou}
-                            onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                            placeholder="HH:MM"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#128C7E]/40 hover:text-[#128C7E] transition-colors"
-                            title="Usar hora atual"
-                          >
-                            <Clock className="w-5 h-5" />
-                          </button>
-                        </div>
                       </div>
                     </div>
 
@@ -1606,56 +1550,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                     <SummaryItem label="Data" value={formData.dataArmou} />
                     <SummaryItem label="CONDUTOR" value={formData.condutorEntra} />
                   </div>
-
-                  {/* Editable Fields (Finalization) */}
-                  <div className="bg-pmpe-gold/5 p-6 rounded-[32px] border border-pmpe-gold/20 space-y-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Settings className="w-5 h-5 text-pmpe-gold" />
-                      <h4 className="font-bold text-pmpe-blue uppercase text-[10px] tracking-widest">Dados de Encerramento (Final do Serviço)</h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2 p-4 bg-pmpe-gold/10 rounded-2xl border-2 border-pmpe-gold/30">
-                        <label className="text-[10px] font-bold uppercase text-pmpe-blue">KM Final</label>
-                        <input 
-                          type="number"
-                          className="w-full p-4 bg-white border border-pmpe-blue/10 rounded-2xl text-sm font-bold text-pmpe-blue focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                          value={formData.kmFinal}
-                          onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
-                          placeholder="KM ao desarmar"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase opacity-50">Hora que Desarmou</label>
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            className="w-full p-4 pr-12 bg-white border border-pmpe-blue/10 rounded-2xl text-sm focus:ring-2 focus:ring-pmpe-blue/20 outline-none transition-all shadow-sm"
-                            value={formData.horaDesarmou}
-                            onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                            placeholder="HH:MM"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                            title="Usar hora atual"
-                          >
-                            <Clock className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleUpdateClosure}
-                      disabled={isGeneratingPDF}
-                      className="w-full bg-pmpe-gold text-pmpe-blue p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-gold/90 transition-all shadow-md flex items-center justify-center gap-2"
-                    >
-                      {isGeneratingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Salvar Encerramento
-                    </button>
-                    <p className="text-[9px] text-pmpe-blue/60 italic text-center">Preencha e salve estes campos para que o PDF e o WhatsApp sejam gerados com os dados de encerramento.</p>
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1762,7 +1656,6 @@ Gerado via ViaturaCheck 14º BPM.`;
             ) : (
               <div className="space-y-4">
                 {history.map((entry, index) => {
-                  const isCompleted = entry.kmFinal && entry.horaDesarmou;
                   return (
                     <motion.div 
                       key={index}
@@ -1771,10 +1664,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                       transition={{ delay: index * 0.05 }}
                       className="bg-white rounded-[32px] p-6 shadow-lg border border-pmpe-blue/5 space-y-4 relative overflow-hidden"
                     >
-                      <div className={`absolute top-0 right-0 px-4 py-1 rounded-bl-2xl text-[8px] font-bold uppercase tracking-widest ${isCompleted ? 'bg-green-500 text-white' : 'bg-pmpe-gold text-white'}`}>
-                        {isCompleted ? 'Concluído' : 'Em Aberto'}
-                      </div>
-
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
                           <h3 className="text-lg font-bold text-pmpe-blue">{entry.viatura}</h3>
@@ -1789,7 +1678,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                           <button 
                             onClick={() => resumeFromHistory(entry)}
                             className="p-3 bg-pmpe-blue/5 text-pmpe-blue rounded-2xl hover:bg-pmpe-blue/10 transition-all"
-                            title="Continuar/Editar"
+                            title="Visualizar/Editar"
                           >
                             <Edit3 className="w-5 h-5" />
                           </button>
@@ -1813,16 +1702,6 @@ Gerado via ViaturaCheck 14º BPM.`;
                           <span className="text-xs font-medium text-pmpe-blue">{entry.kmInicial}</span>
                         </div>
                       </div>
-
-                      {!isCompleted && (
-                        <button 
-                          onClick={() => resumeFromHistory(entry)}
-                          className="w-full py-3 bg-pmpe-gold text-white rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-pmpe-gold/90 transition-all flex items-center justify-center gap-2"
-                        >
-                          <ArrowRightLeft className="w-4 h-4" />
-                          Finalizar Check-out
-                        </button>
-                      )}
                     </motion.div>
                   );
                 })}
@@ -2005,38 +1884,6 @@ Gerado via ViaturaCheck 14º BPM.`;
               <h2 className="text-2xl font-bold text-pmpe-blue">Enviado com Sucesso!</h2>
               <p className="text-sm text-gray-500">O checklist da viatura foi registrado no sistema PMPE.</p>
               
-              <div className="bg-gray-50 p-4 rounded-2xl space-y-3 text-left">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase text-pmpe-blue/60">KM Final</label>
-                  <input 
-                    type="number"
-                    className="w-full p-2 bg-white border border-pmpe-blue/10 rounded-lg text-sm"
-                    value={formData.kmFinal}
-                    onChange={(e) => setFormData({...formData, kmFinal: e.target.value})}
-                    placeholder="KM Final"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase text-pmpe-blue/60">Hora que Desarmou</label>
-                  <div className="relative">
-                    <input 
-                      type="text"
-                      className="w-full p-2 pr-10 bg-white border border-pmpe-blue/10 rounded-lg text-sm"
-                      value={formData.horaDesarmou}
-                      onChange={(e) => setFormData({...formData, horaDesarmou: e.target.value})}
-                      placeholder="HH:MM"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFormData({...formData, horaDesarmou: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-pmpe-blue/40 hover:text-pmpe-blue transition-colors"
-                    >
-                      <Clock className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={shareCheckInWhatsApp}

@@ -27,8 +27,6 @@ export interface ChecklistData {
   partesExternas: string[];
   limpeza: string;
   descricaoAlteracoes: string;
-  kmFinal: string;
-  horaDesarmou: string;
   fotos: string[];
 }
 
@@ -74,8 +72,6 @@ export const checklistSchema = {
     },
     limpeza: { type: Type.STRING, description: "Estado de limpeza" },
     descricaoAlteracoes: { type: Type.STRING, description: "Descrição detalhada de alterações ou avarias" },
-    kmFinal: { type: Type.STRING, description: "Quilometragem final" },
-    horaDesarmou: { type: Type.STRING, description: "Horário que desarmou/encerrou" },
     fotos: { 
       type: Type.ARRAY, 
       items: { type: Type.STRING },
