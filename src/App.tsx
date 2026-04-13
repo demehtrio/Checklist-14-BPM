@@ -1542,7 +1542,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                     className="w-full bg-pmpe-blue text-white p-6 rounded-3xl font-bold uppercase tracking-widest hover:bg-pmpe-blue/90 transition-all shadow-xl flex items-center justify-center gap-3"
                   >
                     <MessageCircle className="w-6 h-6" />
-                    WhatsApp Completo
+                    WhatsApp
                   </button>
                   <button
                     type="button"
@@ -1820,7 +1820,7 @@ Gerado via ViaturaCheck 14º BPM.`;
                   className="w-full py-4 bg-pmpe-blue text-white rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-pmpe-blue/90 flex items-center justify-center gap-2"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  Enviar via WhatsApp
+                  WhatsApp
                 </button>
                 <button 
                   onClick={generatePDF}
